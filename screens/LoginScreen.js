@@ -12,7 +12,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth'; // Import Firebase l
 export default function LoginScreen() {
   const navigation = useNavigation();
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [assets, error] = useAssets([require('../assets/ThabStayLogo.jpeg')]);
+  const [assets, error] = useAssets([require('../assets/logo.png')]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -113,11 +113,10 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Image source={assets[0]} style={styles.backgroundImage} contentFit="cover" />
-
       <View style={styles.card}>
-        <Text style={styles.title}>Login</Text>
-        <Image source={assets[0]} style={styles.cardImage} />
+        <Image source={assets[0]} style={styles.logo} />
+        <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.subtitle}>Sign in to continue</Text>
 
         <View style={styles.inputContainer}>
           <Icon name="envelope" size={20} color="#007BFF" style={styles.iconmail} />
@@ -162,11 +161,11 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  backgroundImage: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.5 },
-  card: { backgroundColor: '#ffffff', borderRadius: 10, padding: 20, width: '90%', elevation: 5, alignItems: 'center' },
-  title: { fontSize: 40, fontWeight: 'bold', marginBottom: 5, textAlign: 'center' },
-  cardImage: { width: '100%', height: 170, borderRadius: 10, marginBottom: 15 },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F4F6F8' },
+  card: { backgroundColor: '#ffffff', borderRadius: 20, padding: 30, width: '90%', elevation: 5, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10 },
+  logo: { width: 100, height: 100, borderRadius: 50, marginBottom: 20 },
+  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 5, textAlign: 'center', color: '#333' },
+  subtitle: { fontSize: 16, color: '#666', marginBottom: 30 },
   inputContainer: { flexDirection: 'row', alignItems: 'center', borderColor: '#ccc', borderWidth: 1, borderRadius: 15, marginBottom: 10, width: '100%', paddingHorizontal: 10 },
   input: { flex: 1, height: 50, paddingLeft: 10 },
   passwordContainer: { flexDirection: 'row', alignItems: 'center', borderColor: '#ccc', borderWidth: 1, borderRadius: 15, width: '100%', marginBottom: 15, paddingHorizontal: 10 },

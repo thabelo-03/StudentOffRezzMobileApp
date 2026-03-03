@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 const { width } = Dimensions.get('window');
 
 const SplashScreen = () => {
-  const [assets, error] = useAssets([require('../assets/ThabStayLogo.jpeg')]);
+  const [assets, error] = useAssets([require('../assets/logo.png')]);
   const navigation = useNavigation();
   
   // Animation values
@@ -66,7 +66,7 @@ const SplashScreen = () => {
            <Image source={assets[0]} style={styles.logo} contentFit="contain" />
         </View>
         
-        <Text style={styles.appName}>ThabStay</Text>
+        <Text style={styles.appName}>Student OffRezz</Text>
         <Text style={styles.tagline}>Find your home away from home</Text>
       </Animated.View>
 
