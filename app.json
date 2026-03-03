@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "ThabStay",
+    "slug": "StudentsOffResApp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/ThabStayLogo.jpeg",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#000000",
+      "resizeMode": "cover"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tdumani.StudentsOffResApp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/ThabStayLogo.jpeg",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.tdumani.StudentsOffResApp"
+    },
+    "web": {
+      "favicon": "./assets/ThabStayLogo.jpeg"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0a725f7d-6c71-499c-a37b-f1b1f4da8de1"
+      }
+    },
+    "plugins": [
+      "expo-sqlite"
+    ]
+  }
+}
