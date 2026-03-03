@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, Alert, TextInput } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import api from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../database/firebaseConfig';
 import { signOut } from 'firebase/auth';
 
@@ -62,6 +63,7 @@ const LandlordDashboard = ({ navigation }) => {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
+      await AsyncStorage.multiRemove(['token', 'user']);
       setMenuVisible(false);
       navigation.reset({
         index: 0,

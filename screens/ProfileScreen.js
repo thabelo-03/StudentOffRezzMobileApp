@@ -8,6 +8,7 @@ import {
   Image,
 } from 'react-native';
 import { getDatabase, ref, onValue } from 'firebase/database';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../database/firebaseConfig';
 import { signOut } from 'firebase/auth';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -33,7 +34,8 @@ const ProfileScreen = ({ navigation }) => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigation.navigate('Login');
+      await AsyncStorage.multiRemove(['token', 'user']);
+      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     } catch (error) {
       Alert.alert('Error', 'Failed to log out');
       console.error(error);

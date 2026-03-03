@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   TextInput,
@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import RNPickerSelect from 'react-native-picker-select';
+import { useFocusEffect } from '@react-navigation/native';
 import api from '../services/api';
 
 const SignUpScreen = ({ navigation }) => {
@@ -29,6 +30,50 @@ const SignUpScreen = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Clear inputs when screen is focused (refreshed)
+  useFocusEffect(
+    useCallback(() => {
+      const resetForm = () => {
+        setUsername('');
+        setEmail('');
+        setPhone('');
+        setPassword('');
+        setConfPass('');
+        setRole('');
+        setStudentRegNo('');
+        setIsAgreed(false);
+        setSecureTextEntry(true);
+        setModalVisible(false);
+        setIsLoading(false);
+      };
+
+      resetForm();
+
+      return () => resetForm();
+    }, [])
+  );
+
+  const validatePassword = (password) => {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[^A-Za-z0-9]/.test(password); // Checks for any non-alphanumeric char
+
+    let errors = [];
+    if (password.length < minLength) errors.push('at least 8 characters');
+    if (!hasUpperCase) errors.push('an uppercase letter');
+    if (!hasLowerCase) errors.push('a lowercase letter');
+    if (!hasNumbers) errors.push('a number');
+    if (!hasSpecialChar) errors.push('a special character');
+    
+    if (errors.length > 0) {
+      return 'Password must contain ' + errors.join(', ') + '.';
+    }
+
+    return null;
+  };
+
   const handleSignup = async () => {
     if (!isAgreed) {
       Alert.alert('Please agree to the terms and conditions.');
@@ -37,6 +82,12 @@ const SignUpScreen = ({ navigation }) => {
 
     if (password !== confpassword) {
       Alert.alert('Passwords do not match.');
+      return;
+    }
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      Alert.alert('Weak Password', passwordError);
       return;
     }
 
@@ -102,6 +153,9 @@ const SignUpScreen = ({ navigation }) => {
                 value={username}
                 onChangeText={setUsername}
                 style={styles.input}
+                autoComplete="off"
+                textContentType="none"
+                autoCorrect={false}
               />
             </View>
 
@@ -112,6 +166,11 @@ const SignUpScreen = ({ navigation }) => {
                 value={email}
                 onChangeText={setEmail}
                 style={styles.input}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="off"
+                textContentType="none"
+                autoCorrect={false}
               />
             </View>
 
@@ -122,6 +181,10 @@ const SignUpScreen = ({ navigation }) => {
                 value={phone}
                 onChangeText={setPhone}
                 style={styles.input}
+                keyboardType="phone-pad"
+                autoComplete="off"
+                textContentType="none"
+                autoCorrect={false}
               />
             </View>
 
@@ -133,6 +196,10 @@ const SignUpScreen = ({ navigation }) => {
                 onChangeText={setPassword}
                 secureTextEntry={secureTextEntry}
                 style={styles.input}
+                autoComplete="off"
+                textContentType="none"
+                autoCorrect={false}
+                autoCapitalize="none"
               />
               <TouchableOpacity onPress={togglePasswordVisibility}>
                 <Icon name={secureTextEntry ? "eye-slash" : "eye"} size={20} color="#000" />
@@ -147,6 +214,10 @@ const SignUpScreen = ({ navigation }) => {
                 onChangeText={setConfPass}
                 secureTextEntry={secureTextEntry}
                 style={styles.input}
+                autoComplete="off"
+                textContentType="none"
+                autoCorrect={false}
+                autoCapitalize="none"
               />
               <TouchableOpacity onPress={togglePasswordVisibility}>
                 <Icon name={secureTextEntry ? "eye-slash" : "eye"} size={20} color="#000" />
@@ -157,12 +228,13 @@ const SignUpScreen = ({ navigation }) => {
               <Icon name="user-circle" size={20} color="blue" style={styles.icon} />
               <Text style={styles.roleText}>Select Your Role</Text>
               <RNPickerSelect
-                placeholder={{ label: 'Select your role...', value: null }}
+                placeholder={{ label: 'Select your role...', value: '' }}
                 items={[
                   { label: 'Landlord', value: 'landlord' },
                   { label: 'Student', value: 'student' },
                 ]}
                 onValueChange={value => setRole(value)}
+                value={role}
                 style={pickerSelectStyles}
               />
             </View>
