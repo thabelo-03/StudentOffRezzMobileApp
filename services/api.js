@@ -3,10 +3,11 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../database/firebaseConfig'; // Import Firebase auth
 
-export const BASE_URL = 'http://192.168.1.239:5000';
+// Replace this with the public URL from Render after you deploy.
+// This is the ONLY line you need to change to point your app to the live server.
+export const BASE_URL = 'https://studentoffrezzmobileapp.onrender.com';
 
 const api = axios.create({
-  // Force use of your laptop's IP address
   baseURL: `${BASE_URL}/api`, 
   headers: {
     'Content-Type': 'application/json',

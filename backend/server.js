@@ -1,3 +1,5 @@
+console.log("Starting server...");
+
 const express = require('express');
 const cors = require('cors'); // Re-adding cors
 const dotenv = require('dotenv'); // Re-adding dotenv for general use if needed elsewhere, but not for DB
@@ -47,5 +49,5 @@ app.use('/api/reports', reportRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server started on port ${PORT}`);
-  console.log(`📱 Network URL: http://192.168.1.7:${PORT}`); 
+  console.log(`📱 Server is running on Render`); 
 });
