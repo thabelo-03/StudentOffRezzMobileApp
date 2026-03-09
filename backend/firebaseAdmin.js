@@ -15,8 +15,12 @@ if (process.env.FIREBASE_CREDENTIALS) {
   }
 } else {
   const filePath = path.join(__dirname, 'firebase-adminsdk.json');
+  const renderSecretPath = '/etc/secrets/firebase-adminsdk.json'; // Default path for Render Secret Files
+
   if (fs.existsSync(filePath)) {
     serviceAccount = require(filePath);
+  } else if (fs.existsSync(renderSecretPath)) {
+    serviceAccount = require(renderSecretPath);
   } else {
     console.error('CRITICAL: FIREBASE_CREDENTIALS env var not set and firebase-adminsdk.json not found.');
   }
