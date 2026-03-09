@@ -37,6 +37,7 @@ if (serviceAccount) {
 let db;
 try {
   db = admin.database();
+  console.log('✅ Firebase Admin SDK initialized and database connected successfully.');
 } catch (e) {
   console.error("Firebase DB init failed (likely missing creds):", e.message);
 }
