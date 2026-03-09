@@ -125,6 +125,14 @@ const AdminDashboardScreen = ({ navigation }) => {
           <Text style={styles.cardText}>All Listings</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => navigation.navigate('AdminPayments')}
+        >
+          <Icon name="cash-multiple" size={40} color="#333" />
+          <Text style={styles.cardText}>Payments</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity 
           style={styles.card}
           onPress={() => navigation.navigate('AdminReports')}

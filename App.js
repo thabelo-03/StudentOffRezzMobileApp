@@ -15,6 +15,7 @@ import SystemConfigsScreen from './screens/SystemConfigsScreen';
 import AdminListingsScreen from './screens/AdminListingsScreen';
 import AdminVerificationScreen from './screens/AdminVerificationScreen'; // Import Admin Verification
 import AdminReportsScreen from './screens/AdminReportsScreen';
+import AdminPaymentsScreen from './screens/AdminPaymentsScreen';
 import PaymentsScreen from './screens/PaymentsScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import LandlordDashboard from './screens/LandlordDashboard'; 
@@ -159,6 +160,7 @@ export default function App() {
         <Stack.Screen name="AdminListings" component={AdminListingsScreen} />
         <Stack.Screen name="AdminReports" component={AdminReportsScreen} />
         <Stack.Screen name="AdminVerification" component={AdminVerificationScreen} />
+        <Stack.Screen name="AdminPayments" component={AdminPaymentsScreen} />
         
         {/* Shared Screens */}
         <Stack.Screen name="Payments" component={PaymentsScreen} />

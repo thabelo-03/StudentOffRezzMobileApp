@@ -219,6 +219,8 @@ const StudentHomeScreen = () => {
       ? (images[0].startsWith('http') || images[0].startsWith('data:') ? images[0] : `${BASE_URL}/uploads/${images[0].replace(/\\/g, '/')}`)
       : null;
 
+    const booking = getBookingStatus(item.id);
+
     return (
       <TouchableOpacity 
         activeOpacity={0.9} 
@@ -244,6 +246,18 @@ const StudentHomeScreen = () => {
           {item.createdAt && (
             <View style={styles.timeBadge}>
               <Text style={styles.timeText}>{getRelativeTime(item.createdAt)}</Text>
+            </View>
+          )}
+          {booking && (
+            <View style={[styles.bookingStatusBadge, 
+              booking.status === 'accepted' ? { backgroundColor: '#2E7D32' } : 
+              booking.status === 'pending' ? { backgroundColor: '#FFC107' } :
+              booking.status === 'paid' ? { backgroundColor: '#2196F3' } :
+              { backgroundColor: '#D32F2F' }
+            ]}>
+              <Text style={styles.bookingStatusText}>
+                {booking.status === 'accepted' ? 'Pay Now' : booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+              </Text>
             </View>
           )}
         </View>
@@ -354,6 +368,14 @@ const StudentHomeScreen = () => {
       return (
         <TouchableOpacity style={[styles.footerMainBtn, { backgroundColor: '#2E7D32' }]} onPress={() => { setDetailVisible(false); navigation.navigate('Payments', { house: activeHouse, bookingId: booking.bookingId }); }}>
           <Text style={styles.footerBtnText}>Pay Now</Text>
+        </TouchableOpacity>
+      );
+    }
+
+    if (booking.status === 'paid') {
+      return (
+        <TouchableOpacity style={[styles.footerMainBtn, { backgroundColor: '#2196F3' }]} disabled>
+          <Text style={styles.footerBtnText}>Paid</Text>
         </TouchableOpacity>
       );
     }
@@ -699,6 +721,8 @@ const styles = StyleSheet.create({
   priceText: { fontWeight: 'bold', color: '#333' },
   timeBadge: { position: 'absolute', top: 15, left: 15, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
   timeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
+  bookingStatusBadge: { position: 'absolute', bottom: 15, right: 15, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, elevation: 3 },
+  bookingStatusText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
   
   cardContent: { padding: 15 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },

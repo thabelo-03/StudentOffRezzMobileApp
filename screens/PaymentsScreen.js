@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, Linking, Image, ScrollView, T
 import api from '../services/api';
 
 const PaymentsScreen = ({ route, navigation }) => {
-  const { housePrice, bookingId } = route.params || {};
+  const { house, bookingId } = route.params || {};
+  const housePrice = house?.price;
   const [transactionId, setTransactionId] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -25,14 +26,16 @@ const PaymentsScreen = ({ route, navigation }) => {
 
     setLoading(true);
     try {
-      await api.post('/bookings/payment-confirmation', {
+      await api.post('/bookings/confirm', {
         bookingId,
         transactionId
       });
+      setTransactionId('');
       Alert.alert("Success", "Payment recorded! A receipt has been sent to your email.", [
-        { text: "OK", onPress: () => navigation.navigate('Home') }
+        { text: "OK", onPress: () => navigation.navigate('Student') }
       ]);
     } catch (error) {
+      console.error("Payment Error:", error);
       Alert.alert("Error", "Failed to record payment.");
     } finally {
       setLoading(false);
@@ -41,7 +44,7 @@ const PaymentsScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 20 }}>
         <View style={styles.cardWrapper}>
           <Text style={styles.title}>Pay for Your Listing</Text>
           <Text style={styles.subtitle}>
@@ -87,6 +90,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
   cardWrapper: {
     width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
     borderRadius: 15,
     padding: 20,
     alignItems: 'center',

@@ -3,6 +3,73 @@ const router = express.Router();
 const auth = require('../middleware/authMiddleware');
 const { db } = require('../firebaseAdmin');
 
+// @route   POST /api/bookings/confirm
+// @desc    Confirm payment with Transaction ID and notify student
+// Moved to top to prevent routing conflicts
+router.post('/confirm', auth, async (req, res) => {
+  try {
+    console.log("Payment confirmation request received:", req.body);
+    const { bookingId, transactionId } = req.body;
+    
+    if (!bookingId || !transactionId) {
+      return res.status(400).json({ message: "Booking ID and Transaction ID required" });
+    }
+
+    // 1. Fetch Booking
+    const bookingRef = db.ref(`bookings/${bookingId}`);
+    const snapshot = await bookingRef.once('value');
+    const booking = snapshot.val();
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    // 2. Update Booking Status & Transaction ID
+    await bookingRef.update({
+      status: 'paid',
+      transactionId: transactionId,
+      paymentDate: Date.now()
+    });
+
+    // 3. Update Student View
+    if (booking.studentId && booking.houseId) {
+      await db.ref(`student_bookings_status/${booking.studentId}/${booking.houseId}`).update({
+        status: 'paid',
+        transactionId: transactionId
+      });
+    }
+
+    // 4. Simulate Sending Email (In production, use nodemailer here)
+    console.log(`[EMAIL SERVICE] Sending Payment Receipt to Student: ${booking.studentEmail}`);
+    console.log(`[EMAIL SERVICE] Subject: Payment Successful - Transaction ${transactionId}`);
+    console.log(`[EMAIL SERVICE] Body: Your payment for ${booking.houseName} was successful. Transaction ID: ${transactionId}`);
+
+    res.json({ message: "Payment recorded successfully" });
+  } catch (err) {
+    console.error("Payment Confirmation Error:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+// @route   GET /api/bookings/payments
+// @desc    Get all paid bookings (Admin only)
+router.get('/payments', auth, async (req, res) => {
+  try {
+    const snapshot = await db.ref('bookings').once('value');
+    const data = snapshot.val() || {};
+
+    const payments = Object.keys(data)
+      .map(key => ({ id: key, ...data[key] }))
+      .filter(b => b.status === 'paid')
+      .sort((a, b) => (b.paymentDate || 0) - (a.paymentDate || 0));
+
+    res.json(payments);
+  } catch (err) {
+    console.error("Admin Payments Error:", err);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
 // @route   GET /api/bookings/landlord
 // @desc    Get all bookings for the authenticated landlord
 router.get('/landlord', auth, async (req, res) => {
@@ -119,52 +186,6 @@ router.put('/:id', auth, async (req, res) => {
   } catch (err) {
     console.error("Update Booking Error:", err.message);
     res.status(500).json({ message: 'Server Error updating booking' });
-  }
-});
-
-// @route   POST /api/bookings/payment-confirmation
-// @desc    Confirm payment with Transaction ID and notify student
-router.post('/payment-confirmation', auth, async (req, res) => {
-  try {
-    const { bookingId, transactionId } = req.body;
-    
-    if (!bookingId || !transactionId) {
-      return res.status(400).json({ message: "Booking ID and Transaction ID required" });
-    }
-
-    // 1. Fetch Booking
-    const bookingRef = db.ref(`bookings/${bookingId}`);
-    const snapshot = await bookingRef.once('value');
-    const booking = snapshot.val();
-
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
-
-    // 2. Update Booking Status & Transaction ID
-    await bookingRef.update({
-      status: 'paid',
-      transactionId: transactionId,
-      paymentDate: Date.now()
-    });
-
-    // 3. Update Student View
-    if (booking.studentId && booking.houseId) {
-      await db.ref(`student_bookings_status/${booking.studentId}/${booking.houseId}`).update({
-        status: 'paid',
-        transactionId: transactionId
-      });
-    }
-
-    // 4. Simulate Sending Email (In production, use nodemailer here)
-    console.log(`[EMAIL SERVICE] Sending Payment Receipt to Student: ${booking.studentEmail}`);
-    console.log(`[EMAIL SERVICE] Subject: Payment Successful - Transaction ${transactionId}`);
-    console.log(`[EMAIL SERVICE] Body: Your payment for ${booking.houseName} was successful. Transaction ID: ${transactionId}`);
-
-    res.json({ message: "Payment recorded successfully" });
-  } catch (err) {
-    console.error("Payment Confirmation Error:", err);
-    res.status(500).json({ message: "Server Error" });
   }
 });
 
