@@ -45,6 +45,11 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/listings', listingRoutes); 
 app.use('/api/reports', reportRoutes);
 
+// Simple Health Check Route
+app.get('/', (req, res) => {
+  res.send('StudentOffRes API is running 🚀');
+});
+
 // --- START SERVER ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
