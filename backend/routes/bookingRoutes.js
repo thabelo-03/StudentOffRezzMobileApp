@@ -122,4 +122,50 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
+// @route   POST /api/bookings/payment-confirmation
+// @desc    Confirm payment with Transaction ID and notify student
+router.post('/payment-confirmation', auth, async (req, res) => {
+  try {
+    const { bookingId, transactionId } = req.body;
+    
+    if (!bookingId || !transactionId) {
+      return res.status(400).json({ message: "Booking ID and Transaction ID required" });
+    }
+
+    // 1. Fetch Booking
+    const bookingRef = db.ref(`bookings/${bookingId}`);
+    const snapshot = await bookingRef.once('value');
+    const booking = snapshot.val();
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    // 2. Update Booking Status & Transaction ID
+    await bookingRef.update({
+      status: 'paid',
+      transactionId: transactionId,
+      paymentDate: Date.now()
+    });
+
+    // 3. Update Student View
+    if (booking.studentId && booking.houseId) {
+      await db.ref(`student_bookings_status/${booking.studentId}/${booking.houseId}`).update({
+        status: 'paid',
+        transactionId: transactionId
+      });
+    }
+
+    // 4. Simulate Sending Email (In production, use nodemailer here)
+    console.log(`[EMAIL SERVICE] Sending Payment Receipt to Student: ${booking.studentEmail}`);
+    console.log(`[EMAIL SERVICE] Subject: Payment Successful - Transaction ${transactionId}`);
+    console.log(`[EMAIL SERVICE] Body: Your payment for ${booking.houseName} was successful. Transaction ID: ${transactionId}`);
+
+    res.json({ message: "Payment recorded successfully" });
+  } catch (err) {
+    console.error("Payment Confirmation Error:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
 module.exports = router;

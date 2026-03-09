@@ -9,44 +9,11 @@ const LandlordVerificationScreen = ({ navigation, route }) => {
   
   const [proofOfRes, setProofOfRes] = useState('');
   const [idDocument, setIdDocument] = useState('');
-  const [otp, setOtp] = useState('');
-  const [contactVerified, setContactVerified] = useState(user?.contactVerified || false);
   const [loading, setLoading] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-
-  const handleSendOtp = async () => {
-    try {
-      const res = await api.post('/auth/send-otp');
-      if (res.data.devOtp) {
-        Alert.alert("Demo OTP", `Your code is: ${res.data.devOtp}`);
-      } else {
-        Alert.alert("OTP Sent", "Check your registered contact.");
-      }
-      setOtpSent(true);
-    } catch (error) {
-      Alert.alert("Error", "Failed to send OTP");
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!otp) return Alert.alert("Error", "Enter OTP");
-    try {
-      await api.post('/auth/verify-otp', { code: otp });
-      setContactVerified(true);
-      Alert.alert("Success", "Contact Verified");
-    } catch (error) {
-      Alert.alert("Error", "Invalid OTP");
-    }
-  };
 
   const handleSubmit = async () => {
-    if (!contactVerified) {
-      Alert.alert("Verification Required", "Please verify your contact details first.");
-      return;
-    }
-
     if (!proofOfRes || !idDocument) {
-      Alert.alert('Missing Documents', 'Please provide links for both documents.');
+      Alert.alert('Missing Documents', 'Please provide links for both PDF documents.');
       return;
     }
 
@@ -63,7 +30,7 @@ const LandlordVerificationScreen = ({ navigation, route }) => {
 
       Alert.alert(
         'Submission Successful', 
-        'Your documents have been submitted for review. You will be notified once an admin approves your account.',
+        'Your documents have been submitted for review. You will be notified via email once an admin approves your account.',
         [
           { text: 'OK', onPress: () => navigation.navigate('Login') }
         ]
@@ -81,47 +48,15 @@ const LandlordVerificationScreen = ({ navigation, route }) => {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Account Verification</Text>
       <Text style={styles.subtitle}>
-        Welcome {user?.username}. To activate your Landlord account, please submit the required documents.
+        Welcome {user?.username}. To activate your Landlord account, please submit the required documents in PDF format.
       </Text>
 
-      {/* Contact Verification Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>1. Contact Verification</Text>
-        {contactVerified ? (
-          <View style={styles.verifiedBadge}>
-            <Icon name="check-circle" size={20} color="#4CAF50" />
-            <Text style={styles.verifiedText}>Contact Verified</Text>
-          </View>
-        ) : (
-          <View>
-            {!otpSent ? (
-              <TouchableOpacity style={styles.otpBtn} onPress={handleSendOtp}>
-                <Text style={styles.otpBtnText}>Send Verification Code</Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={styles.otpRow}>
-                <TextInput 
-                  style={[styles.input, { flex: 1, marginRight: 10 }]} 
-                  placeholder="Enter OTP" 
-                  value={otp} 
-                  onChangeText={setOtp} 
-                  keyboardType="numeric"
-                />
-                <TouchableOpacity style={styles.verifyBtn} onPress={handleVerifyOtp}>
-                  <Text style={styles.verifyBtnText}>Verify</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
-      </View>
-
-      <Text style={[styles.sectionTitle, { marginTop: 20 }]}>2. Identity Documents</Text>
+      <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Identity Documents</Text>
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Proof of Residence (URL)</Text>
+        <Text style={styles.label}>Proof of Residence (URL to PDF)</Text>
         <TextInput
           style={styles.input}
-          placeholder="Paste link to document..."
+          placeholder="Paste link to PDF document..."
           value={proofOfRes}
           onChangeText={setProofOfRes}
           autoCapitalize="none"
@@ -129,10 +64,10 @@ const LandlordVerificationScreen = ({ navigation, route }) => {
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>ID Document (URL)</Text>
+        <Text style={styles.label}>ID Document (URL to PDF)</Text>
         <TextInput
           style={styles.input}
-          placeholder="Paste link to ID..."
+          placeholder="Paste link to PDF of ID..."
           value={idDocument}
           onChangeText={setIdDocument}
           autoCapitalize="none"

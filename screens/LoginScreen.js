@@ -68,7 +68,7 @@ export default function LoginScreen() {
         navigation.navigate('AdminDashboard');
       } else if (user.role === 'landlord') {
         // Check verification status before allowing access to dashboard
-        if (user.verificationStatus !== 'verified' || !user.contactVerified) {
+        if (user.verificationStatus !== 'verified') {
           navigation.navigate('LandlordVerification', { user });
         } else {
           navigation.navigate('Landlord'); 

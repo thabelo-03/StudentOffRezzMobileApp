@@ -1,245 +1,138 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, Alert } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import * as DocumentPicker from 'expo-document-picker';
-import * as MailComposer from 'expo-mail-composer';
+import { View, Text, TouchableOpacity, StyleSheet, Linking, Image, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
+import api from '../services/api';
 
 const PaymentsScreen = ({ route, navigation }) => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('');
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [date, setDate] = useState('');
-  const [proofOfPayment, setProofOfPayment] = useState(null);
-  const [fileName, setFileName] = useState('');
-  const { house } = route.params;
-  const landlordEmail = house?.landlordEmail;
+  const { housePrice, bookingId } = route.params || {};
+  const [transactionId, setTransactionId] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const openPaymentModal = (method) => {
-    setPaymentMethod(method);
-    setModalVisible(true);
+  const payNowLink = "https://www.paynow.co.zw/Payment/Link/?q=c2VhcmNoPXRoYWJzdGF5JTQwZ21haWwuY29tJmFtb3VudD0wLjAwJnJlZmVyZW5jZT0mbD0w";
+
+  const handlePayNowPress = () => {
+    Linking.openURL(payNowLink).catch(() => alert('Failed to open PayNow link'));
   };
 
-  const handleUpload = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: 'application/pdf',
-    });
-
-    if (result.canceled) {
-      Alert.alert('Upload Cancelled');
+  const handleConfirmPayment = async () => {
+    if (!transactionId.trim()) {
+      Alert.alert("Error", "Please enter the Transaction ID from PayNow.");
+      return;
+    }
+    if (!bookingId) {
+      Alert.alert("Error", "Booking ID missing. Please try again from Home screen.");
       return;
     }
 
-    const { assets } = result;
-    if (assets && assets[0]) {
-      setProofOfPayment(assets[0]);
-      setFileName(assets[0].name);
-    } else {
-      Alert.alert('Error', 'No file selected');
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!name || !phone || !date || !proofOfPayment) {
-      Alert.alert('Missing Info', 'Please fill in all fields and upload your proof of payment.');
-      return;
-    }
-
-    const emailBody = `
-      Payment Method: ${paymentMethod}
-      Name: ${name}
-      Phone: ${phone}
-      Date: ${date}
-      Proof of Payment File: ${fileName}
-    `;
-
+    setLoading(true);
     try {
-      await MailComposer.composeAsync({
-        recipients: [landlordEmail], 
-        subject: `Proof of Payment for Booking - ${house.houseName}`,
-        body: emailBody,
-        attachments: [proofOfPayment.uri],
+      await api.post('/bookings/payment-confirmation', {
+        bookingId,
+        transactionId
       });
-
-      Alert.alert('Success', 'Payment details sent successfully!');
-      setModalVisible(false);
-      setName('');
-      setPhone('');
-      setDate('');
-      setProofOfPayment(null);
-      setFileName('');
-    } catch (err) {
-      Alert.alert('Error', 'Failed to send email. Try again.');
+      Alert.alert("Success", "Payment recorded! A receipt has been sent to your email.", [
+        { text: "OK", onPress: () => navigation.navigate('Home') }
+      ]);
+    } catch (error) {
+      Alert.alert("Error", "Failed to record payment.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Choose Payment Method</Text>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <View style={styles.cardWrapper}>
+          <Text style={styles.title}>Pay for Your Listing</Text>
+          <Text style={styles.subtitle}>
+            Amount: ${housePrice}.
+          </Text>
+          <Text style={styles.instruction}>
+            1. Click the button below to pay on PayNow.
+          </Text>
 
-      <TouchableOpacity style={[styles.button, { backgroundColor: '#3CB371' }]} onPress={() => openPaymentModal('EcoCash')}>
-        <Icon name="mobile" size={20} color="#fff" />
-        <Text style={styles.buttonText}>Pay with EcoCash</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={[styles.button, { backgroundColor: '#1E90FF' }]} onPress={() => openPaymentModal('PayNow')}>
-        <Icon name="credit-card" size={20} color="#fff" />
-        <Text style={styles.buttonText}>Pay with PayNow</Text>
-      </TouchableOpacity>
-
-      {/* Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>{paymentMethod} Payment</Text>
-
-            <TextInput
-              placeholder="Full Name"
-              value={name}
-              onChangeText={setName}
-              style={styles.input}
+          <TouchableOpacity onPress={handlePayNowPress} style={styles.paynowBtn}>
+            <Image
+              source={{ uri: 'https://www.paynow.co.zw/Content/Buttons/Medium_buttons/button_pay-now_medium.png' }}
+              style={{ width: 200, height: 60 }}
+              resizeMode="contain"
             />
-            <TextInput
-              placeholder="Phone Number"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              style={styles.input}
-            />
-            <TextInput
-              placeholder="Date of Payment (YYYY-MM-DD)"
-              value={date}
-              onChangeText={setDate}
-              style={styles.input}
-            />
+          </TouchableOpacity>
 
-            <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
-              <Icon name="upload" size={18} color="#fff" />
-              <Text style={styles.uploadText}>Upload Proof (PDF)</Text>
-            </TouchableOpacity>
+          <View style={styles.divider} />
 
-            {fileName ? <Text style={styles.fileName}>Uploaded: {fileName}</Text> : null}
+          <Text style={styles.instruction}>
+            2. After payment, copy the Transaction ID (e.g. 40371450) from the success page and paste it below:
+          </Text>
 
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                <Text style={styles.submitText}>Submit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Transaction ID"
+            value={transactionId}
+            onChangeText={setTransactionId}
+            keyboardType="numeric"
+          />
+
+          <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmPayment} disabled={loading}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmText}>Confirm Payment</Text>}
+          </TouchableOpacity>
+
         </View>
-      </Modal>
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f0f2f5',
+  container: { flex: 1, backgroundColor: '#f8f9fa' },
+  cardWrapper: {
+    width: '100%',
+    borderRadius: 15,
     padding: 20,
-    justifyContent: 'center',
-  },
-  header: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    marginBottom: 40,
-    textAlign: 'center',
-  },
-  button: {
-    flexDirection: 'row',
-    padding: 16,
-    borderRadius: 12,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    marginLeft: 10,
-  },
-  modalBackground: {
-    flex: 1,
-    backgroundColor: '#000000aa',
-    justifyContent: 'center',
-  },
-  modalContainer: {
-    margin: 20,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 25,
+    borderWidth: 2,
+    borderColor: '#007BFF',
+    backgroundColor: '#ffffff',
+    overflow: 'hidden',
+    elevation: 8,
     shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
-    elevation: 10,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 15,
-    textAlign: 'center',
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10, color: '#007BFF', textAlign: 'center' },
+  subtitle: { fontSize: 18, color: '#333', textAlign: 'center', marginBottom: 10, fontWeight: 'bold' },
+  instruction: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 10, marginTop: 10 },
+  paynowBtn: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    marginBottom: 10
   },
+  divider: { width: '100%', height: 1, backgroundColor: '#eee', marginVertical: 15 },
   input: {
+    width: '100%',
     borderWidth: 1,
-    borderColor: '#aaa',
-    borderRadius: 10,
+    borderColor: '#ccc',
+    borderRadius: 8,
     padding: 12,
-    marginBottom: 15,
-  },
-  uploadButton: {
-    flexDirection: 'row',
-    backgroundColor: '#6a5acd',
-    padding: 12,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  uploadText: {
-    color: '#fff',
     fontSize: 16,
-    marginLeft: 10,
+    marginBottom: 15,
+    backgroundColor: '#f9f9f9'
   },
-  fileName: {
-    marginTop: 10,
-    color: '#333',
-    textAlign: 'center',
-  },
-  modalActions: {
-    marginTop: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  submitButton: {
-    flex: 1,
+  confirmBtn: {
     backgroundColor: '#28a745',
-    padding: 12,
-    borderRadius: 10,
-    marginRight: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center'
   },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#dc3545',
-    padding: 12,
-    borderRadius: 10,
-  },
-  submitText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  cancelText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
+  confirmText: { color: '#fff', fontWeight: 'bold', fontSize: 16 }
 });
 
 export default PaymentsScreen;

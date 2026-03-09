@@ -352,7 +352,7 @@ const StudentHomeScreen = () => {
 
     if (booking.status === 'accepted') {
       return (
-        <TouchableOpacity style={[styles.footerMainBtn, { backgroundColor: '#2E7D32' }]} onPress={() => { setDetailVisible(false); navigation.navigate('Payments', { house: activeHouse }); }}>
+        <TouchableOpacity style={[styles.footerMainBtn, { backgroundColor: '#2E7D32' }]} onPress={() => { setDetailVisible(false); navigation.navigate('Payments', { house: activeHouse, bookingId: booking.bookingId }); }}>
           <Text style={styles.footerBtnText}>Pay Now</Text>
         </TouchableOpacity>
       );

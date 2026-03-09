@@ -128,7 +128,6 @@ router.post('/login', async (req, res) => {
         phone: userProfile.phone,
         verificationStatus: userProfile.verificationStatus,
         studentVerified: userProfile.studentVerified,
-        contactVerified: userProfile.contactVerified,
         studentIdNumber: userProfile.studentIdNumber
       }
     });
