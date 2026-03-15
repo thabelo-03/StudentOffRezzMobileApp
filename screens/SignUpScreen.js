@@ -26,7 +26,8 @@ const SignUpScreen = ({ navigation }) => {
   const [role, setRole] = useState('');
   const [studentRegNo, setStudentRegNo] = useState('');
   const [isAgreed, setIsAgreed] = useState(false);
-  const [secureTextEntry, setSecureTextEntry] = useState(true);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,7 +43,8 @@ const SignUpScreen = ({ navigation }) => {
         setRole('');
         setStudentRegNo('');
         setIsAgreed(false);
-        setSecureTextEntry(true);
+        setPasswordVisible(false);
+        setConfirmPasswordVisible(false);
         setModalVisible(false);
         setIsLoading(false);
       };
@@ -127,10 +129,6 @@ const SignUpScreen = ({ navigation }) => {
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setSecureTextEntry(!secureTextEntry);
-  };
-
   const closeModal = () => {
     setModalVisible(false);
     navigation.navigate('Login');
@@ -194,15 +192,15 @@ const SignUpScreen = ({ navigation }) => {
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry={secureTextEntry}
+                secureTextEntry={!passwordVisible}
                 style={styles.input}
                 autoComplete="off"
                 textContentType="none"
                 autoCorrect={false}
                 autoCapitalize="none"
               />
-              <TouchableOpacity onPress={togglePasswordVisibility}>
-                <Icon name={secureTextEntry ? "eye-slash" : "eye"} size={20} color="#000" />
+              <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} style={styles.eyeIconContainer}>
+                <Icon name={passwordVisible ? 'eye' : 'eye-slash'} size={20} color="#007BFF" />
               </TouchableOpacity>
             </View>
 
@@ -212,15 +210,15 @@ const SignUpScreen = ({ navigation }) => {
                 placeholder="Confirm Password"
                 value={confpassword}
                 onChangeText={setConfPass}
-                secureTextEntry={secureTextEntry}
+                secureTextEntry={!confirmPasswordVisible}
                 style={styles.input}
                 autoComplete="off"
                 textContentType="none"
                 autoCorrect={false}
                 autoCapitalize="none"
               />
-              <TouchableOpacity onPress={togglePasswordVisibility}>
-                <Icon name={secureTextEntry ? "eye-slash" : "eye"} size={20} color="#000" />
+              <TouchableOpacity onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)} style={styles.eyeIconContainer}>
+                <Icon name={confirmPasswordVisible ? 'eye' : 'eye-slash'} size={20} color="#007BFF" />
               </TouchableOpacity>
             </View>
 
@@ -336,6 +334,9 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: 10,
+  },
+  eyeIconContainer: {
+    padding: 5,
   },
   roleText: {
     fontSize: 16,

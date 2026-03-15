@@ -152,8 +152,11 @@ export default function LoginScreen() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-          <Text style={styles.signUpLink}>Don't have an account? Sign Up</Text>
+        <TouchableOpacity 
+          style={styles.signUpContainer} 
+          onPress={() => navigation.navigate('SignUp')}
+        >
+          <Text style={styles.signUpText}>Don't have an account? <Text style={styles.signUpHighlight}>Sign Up</Text></Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -175,5 +178,7 @@ const styles = StyleSheet.create({
   iconpass: { marginRight: 5 },
   button: { backgroundColor: '#007BFF', borderRadius: 25, height: 50, justifyContent: 'center', alignItems: 'center', width: '60%' },
   buttonText: { color: '#ffffff', fontWeight: 'bold', fontSize: 18 },
-  signUpLink: { marginTop: 15, color: '#007BFF', textAlign: 'center' },
+  signUpContainer: { marginTop: 15, padding: 10 },
+  signUpText: { color: '#666', fontSize: 14, textAlign: 'center' },
+  signUpHighlight: { color: '#007BFF', fontWeight: 'bold' },
 });

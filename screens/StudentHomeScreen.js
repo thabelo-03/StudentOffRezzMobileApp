@@ -158,7 +158,8 @@ const StudentHomeScreen = () => {
   // Get unique locations from houses
   const uniqueLocations = useMemo(() => {
     const locs = houses.map(h => h.location).filter(l => l);
-    return [...new Set(locs)].sort();
+    const predefinedLocations = ['KMP', 'Senka', 'Ardilaide Park', 'CBZ', 'Nehosho', 'Masolar', 'Frontline'];
+    return [...new Set([...predefinedLocations, ...locs])].sort();
   }, [houses]);
 
   const filteredHouses = useMemo(() => {
@@ -167,7 +168,7 @@ const StudentHomeScreen = () => {
       const q = debouncedSearch;
       const title = (h.title || h.houseName || '').toLowerCase();
       const location = (h.location || '').toLowerCase();
-      const matchesSearch = title.includes(q) || loc.includes(q);
+      const matchesSearch = title.includes(q) || location.includes(q);
 
       // 2. Location Filter
       const matchesLocation = filters.location ? h.location === filters.location : true;
