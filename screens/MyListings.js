@@ -11,6 +11,10 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api, { BASE_URL } from '../services/api';
 
+const LOCATION_OPTIONS = [
+  'KMP', 'Senka', 'Ardilaide Park', 'CBZ', 'Nehosho', 'Masolar', 'Frontline'
+];
+
 const AMENITY_OPTIONS = [
   'Borehole', 'Wi-Fi', 'Solar', 'ZESA', 
   'Play Grounds', 'Swimming', 'Gas Stoves', 'Geyser'
@@ -29,6 +33,7 @@ const MyListings = () => {
   const [genderPolicy, setGenderPolicy] = useState('Mixed');
   const [amenities, setAmenities] = useState([]);
   const [showAmenitiesDropdown, setShowAmenitiesDropdown] = useState(false);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [imageUrls, setImageUrls] = useState([]); // Matches backend key
   
   const [editingHouseId, setEditingHouseId] = useState(null);
@@ -256,6 +261,7 @@ const MyListings = () => {
     setGenderPolicy('Mixed');
     setAmenities([]);
     setShowAmenitiesDropdown(false);
+    setShowLocationDropdown(false);
     setImageUrls([]);
     setEditingHouseId(null);
     setModalVisible(false);
@@ -354,6 +360,31 @@ const MyListings = () => {
           
           <Text style={styles.label}>House Title</Text>
           <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="e.g. PerkHouse" />
+          
+          <Text style={styles.label}>Location</Text>
+          <TouchableOpacity 
+            style={styles.dropdownBtn} 
+            onPress={() => setShowLocationDropdown(!showLocationDropdown)}
+          >
+            <Text style={styles.dropdownBtnText}>
+              {location || 'Select Location'}
+            </Text>
+            <Icon name={showLocationDropdown ? "chevron-up" : "chevron-down"} size={16} color="#555" />
+          </TouchableOpacity>
+          
+          {showLocationDropdown && (
+            <View style={styles.amenitiesContainer}>
+              {LOCATION_OPTIONS.map(loc => (
+                <TouchableOpacity 
+                  key={loc} 
+                  style={[styles.amenityChip, location === loc && styles.amenityChipSelected]}
+                  onPress={() => { setLocation(loc); setShowLocationDropdown(false); }}
+                >
+                  <Text style={[styles.amenityText, location === loc && styles.amenityTextSelected]}>{loc}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
           
           <Text style={styles.label}>Price ($)</Text>
           <TextInput style={styles.input} value={price} onChangeText={setPrice} keyboardType="numeric" />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, Image, ScrollView, TouchableOpacity,
   Linking, Alert, Modal, ActivityIndicator, TextInput, FlatList, Dimensions
@@ -42,6 +42,8 @@ const StudentHomeScreen = () => {
   
   const [activeHouse, setActiveHouse] = useState(null);
   const [detailVisible, setDetailVisible] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const carouselRef = useRef(null);
 
   // Refresh data every time the screen comes into focus
   useFocusEffect(
@@ -228,7 +230,7 @@ const StudentHomeScreen = () => {
       <TouchableOpacity 
         activeOpacity={0.9} 
         style={styles.card} 
-        onPress={() => { setActiveHouse(item); setDetailVisible(true); }}
+        onPress={() => { setActiveHouse(item); setActiveImageIndex(0); setDetailVisible(true); }}
       >
         <View style={styles.cardImageWrapper}>
           {mainImage ? (
@@ -601,8 +603,19 @@ const StudentHomeScreen = () => {
             {activeHouse && (
               <>
               <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-                {/* Image Carousel */}
-                <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} style={styles.carouselContainer}>
+                {/* Image Carousel with Arrows */}
+                <View style={{ position: 'relative' }}>
+                  <ScrollView 
+                    ref={carouselRef}
+                    horizontal 
+                    pagingEnabled 
+                    showsHorizontalScrollIndicator={false} 
+                    style={styles.carouselContainer}
+                    onMomentumScrollEnd={(e) => {
+                      const index = Math.round(e.nativeEvent.contentOffset.x / width);
+                      setActiveImageIndex(index);
+                    }}
+                  >
                    {(activeHouse.imageUrls || activeHouse.images || []).map((img, i) => (
                       <Image 
                         key={i}
@@ -610,7 +623,45 @@ const StudentHomeScreen = () => {
                         style={styles.carouselImage} 
                       />
                    ))}
-                </ScrollView>
+                  </ScrollView>
+
+                  {/* Left Arrow */}
+                  {activeImageIndex > 0 && (
+                    <TouchableOpacity 
+                      style={[styles.carouselArrow, { left: 10 }]} 
+                      onPress={() => {
+                        const newIndex = activeImageIndex - 1;
+                        carouselRef.current?.scrollTo({ x: newIndex * width, animated: true });
+                        setActiveImageIndex(newIndex);
+                      }}
+                    >
+                      <Icon name="chevron-left" size={28} color="#fff" />
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Right Arrow */}
+                  {activeImageIndex < (activeHouse.imageUrls || activeHouse.images || []).length - 1 && (
+                    <TouchableOpacity 
+                      style={[styles.carouselArrow, { right: 10 }]} 
+                      onPress={() => {
+                        const newIndex = activeImageIndex + 1;
+                        carouselRef.current?.scrollTo({ x: newIndex * width, animated: true });
+                        setActiveImageIndex(newIndex);
+                      }}
+                    >
+                      <Icon name="chevron-right" size={28} color="#fff" />
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Dot Indicators */}
+                  {(activeHouse.imageUrls || activeHouse.images || []).length > 1 && (
+                    <View style={styles.dotRow}>
+                      {(activeHouse.imageUrls || activeHouse.images || []).map((_, i) => (
+                        <View key={i} style={[styles.dot, activeImageIndex === i && styles.dotActive]} />
+                      ))}
+                    </View>
+                  )}
+                </View>
 
                 <View style={styles.sheetContent}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -821,6 +872,12 @@ const styles = StyleSheet.create({
   filterOptionText: { fontSize: 16, color: '#333' },
   filterOptionTextActive: { color: '#007BFF', fontWeight: 'bold' },
   closeFilterModalBtn: { marginTop: 15, alignItems: 'center', padding: 10 },
+
+  // Carousel Arrows & Dots
+  carouselArrow: { position: 'absolute', top: '40%', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 20, width: 40, height: 40, justifyContent: 'center', alignItems: 'center', zIndex: 10 },
+  dotRow: { flexDirection: 'row', justifyContent: 'center', position: 'absolute', bottom: 10, width: '100%' },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.5)', marginHorizontal: 4 },
+  dotActive: { backgroundColor: '#fff', width: 10, height: 10, borderRadius: 5 },
 });
 
 export default StudentHomeScreen;
