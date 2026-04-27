@@ -137,8 +137,16 @@ const AdminDashboardScreen = ({ navigation }) => {
           style={styles.card}
           onPress={() => navigation.navigate('AdminReports')}
         >
+          <Icon name="alert-circle" size={40} color="#333" />
+          <Text style={styles.cardText}>Issues</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.card}
+          onPress={() => navigation.navigate('AdminReportGenerator')}
+        >
           <Icon name="file-chart" size={40} color="#333" />
-          <Text style={styles.cardText}>Reports & Issues</Text>
+          <Text style={styles.cardText}>Generate Reports</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 

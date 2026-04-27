@@ -5,6 +5,10 @@ import api from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../database/firebaseConfig';
 import { signOut } from 'firebase/auth';
+import {
+  generatePropertiesPDF, generateBookingsPDF, generateRevenuePDF,
+  generatePropertiesCSV, generateBookingsCSV
+} from '../services/reportService';
 
 const LandlordDashboard = ({ navigation }) => {
   const [stats, setStats] = useState({ pending: 0, active: 0, revenue: 0 });
@@ -16,6 +20,7 @@ const LandlordDashboard = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [reportText, setReportText] = useState('');
+  const [reportGenerating, setReportGenerating] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -254,6 +259,44 @@ const LandlordDashboard = ({ navigation }) => {
             </TouchableOpacity>
           ))
         )}
+
+        {/* Download Reports Section */}
+        <Text style={styles.sectionTitle}>Download Reports</Text>
+        <View style={styles.reportGrid}>
+          {[
+            { id: 'prop_pdf', title: 'Properties', subtitle: 'PDF', icon: 'home-city', color: '#007BFF',
+              action: async () => { const r = await api.get('/listings/mine'); await generatePropertiesPDF(r.data || []); } },
+            { id: 'prop_csv', title: 'Properties', subtitle: 'Excel', icon: 'file-excel', color: '#217346',
+              action: async () => { const r = await api.get('/listings/mine'); await generatePropertiesCSV(r.data || []); } },
+            { id: 'book_pdf', title: 'Bookings', subtitle: 'PDF', icon: 'book-outline', color: '#FF9800',
+              action: async () => { const r = await api.get('/bookings/landlord'); await generateBookingsPDF(r.data || []); } },
+            { id: 'book_csv', title: 'Bookings', subtitle: 'Excel', icon: 'file-excel', color: '#217346',
+              action: async () => { const r = await api.get('/bookings/landlord'); await generateBookingsCSV(r.data || []); } },
+            { id: 'rev_pdf', title: 'Revenue', subtitle: 'PDF', icon: 'cash-multiple', color: '#4CAF50',
+              action: async () => { const r = await api.get('/bookings/landlord'); await generateRevenuePDF(r.data || []); } },
+          ].map((report) => (
+            <TouchableOpacity
+              key={report.id}
+              style={styles.reportCard}
+              disabled={reportGenerating !== null}
+              onPress={async () => {
+                setReportGenerating(report.id);
+                try { await report.action(); } catch (e) { Alert.alert('Error', 'Failed to generate report.'); }
+                setReportGenerating(null);
+              }}
+            >
+              {reportGenerating === report.id ? (
+                <ActivityIndicator size="small" color={report.color} />
+              ) : (
+                <Icon name={report.icon} size={24} color={report.color} />
+              )}
+              <Text style={styles.reportCardTitle}>{report.title}</Text>
+              <View style={[styles.reportBadge, { backgroundColor: report.color + '20' }]}>
+                <Text style={[styles.reportBadgeText, { color: report.color }]}>{report.subtitle}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
         
       </ScrollView>
     </View>
@@ -341,6 +384,16 @@ const styles = StyleSheet.create({
   cancelReportBtn: { padding: 10, alignItems: 'center' },
   whiteText: { color: '#fff', fontWeight: 'bold' },
   cancelText: { color: '#666' },
+
+  // Report Section
+  reportGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 },
+  reportCard: {
+    backgroundColor: '#FFF', borderRadius: 12, padding: 15, width: '31%',
+    alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOpacity: 0.05,
+  },
+  reportCardTitle: { fontSize: 11, fontWeight: '600', color: '#333', marginTop: 8, textAlign: 'center' },
+  reportBadge: { marginTop: 6, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  reportBadgeText: { fontSize: 10, fontWeight: 'bold' },
 });
 
 export default LandlordDashboard;

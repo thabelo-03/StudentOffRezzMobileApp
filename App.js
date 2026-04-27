@@ -27,6 +27,7 @@ import ChatDetail from './screens/ChatDetail'; // Ensure this exists in /screens
 import StudentInbox from './screens/StudentInbox'; // Import StudentInbox
 import LandlordVerificationScreen from './screens/LandlordVerificationScreen'; // Import Verification Screen
 import StudentVerificationScreen from './screens/StudentVerificationScreen';
+import AdminReportGenerator from './screens/AdminReportGenerator';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -161,6 +162,7 @@ export default function App() {
         <Stack.Screen name="AdminReports" component={AdminReportsScreen} />
         <Stack.Screen name="AdminVerification" component={AdminVerificationScreen} />
         <Stack.Screen name="AdminPayments" component={AdminPaymentsScreen} />
+        <Stack.Screen name="AdminReportGenerator" component={AdminReportGenerator} options={{ title: 'Generate Reports' }} />
         
         {/* Shared Screens */}
         <Stack.Screen name="Payments" component={PaymentsScreen} />
