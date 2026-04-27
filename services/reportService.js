@@ -63,7 +63,7 @@ const wrapHTML = (body) => `
 // PDF Generators
 // ============================
 
-export const generatePropertiesPDF = async (listings) => {
+export const generatePropertiesPDF = async (listings, dateRange = '') => {
   const stats = [
     { label: 'Total Properties', value: listings.length, color: '#007BFF' },
     { label: 'Total Spots', value: listings.reduce((a, h) => a + (Number(h.availableSpots) || 0), 0), color: '#4CAF50' },
@@ -81,7 +81,7 @@ export const generatePropertiesPDF = async (listings) => {
   ]);
 
   const html = wrapHTML(
-    getHeaderHTML('Properties Report', `Generated on ${new Date().toDateString()}`) +
+    getHeaderHTML('Properties Report', dateRange || `Generated on ${new Date().toDateString()}`) +
     getStatBoxHTML(stats) +
     '<h3>Property Listings</h3>' +
     getTableHTML(headers, rows) +
@@ -91,7 +91,7 @@ export const generatePropertiesPDF = async (listings) => {
   await printOrShare(html, 'Properties_Report');
 };
 
-export const generateBookingsPDF = async (bookings) => {
+export const generateBookingsPDF = async (bookings, dateRange = '') => {
   const pending = bookings.filter(b => b.status === 'pending').length;
   const accepted = bookings.filter(b => b.status === 'accepted').length;
   const paid = bookings.filter(b => b.status === 'paid').length;
@@ -115,7 +115,7 @@ export const generateBookingsPDF = async (bookings) => {
   ]);
 
   const html = wrapHTML(
-    getHeaderHTML('Booking Summary Report', `Total: ${bookings.length} bookings`) +
+    getHeaderHTML('Booking Summary Report', dateRange || `Total: ${bookings.length} bookings`) +
     getStatBoxHTML(stats) +
     '<h3>All Bookings</h3>' +
     getTableHTML(headers, rows) +
@@ -125,7 +125,7 @@ export const generateBookingsPDF = async (bookings) => {
   await printOrShare(html, 'Booking_Summary');
 };
 
-export const generateRevenuePDF = async (bookings) => {
+export const generateRevenuePDF = async (bookings, dateRange = '') => {
   const paidBookings = bookings.filter(b => b.status === 'paid');
   const totalRevenue = paidBookings.reduce((a, b) => a + (Number(b.amount) || 0), 0);
 
@@ -149,7 +149,7 @@ export const generateRevenuePDF = async (bookings) => {
   rows.push(['', '', '', `<strong>$${totalRevenue}</strong>`, '', '<strong>TOTAL</strong>']);
 
   const html = wrapHTML(
-    getHeaderHTML('Revenue Report', `Total Revenue: $${totalRevenue}`) +
+    getHeaderHTML('Revenue Report', dateRange || `Total Revenue: $${totalRevenue}`) +
     getStatBoxHTML(stats) +
     '<h3>Payment Transactions</h3>' +
     getTableHTML(headers, rows) +
@@ -163,7 +163,7 @@ export const generateRevenuePDF = async (bookings) => {
 // Admin PDF Generators
 // ============================
 
-export const generatePlatformOverviewPDF = async (users, houses) => {
+export const generatePlatformOverviewPDF = async (users, houses, dateRange = '') => {
   const students = users.filter(u => u.role === 'student').length;
   const landlords = users.filter(u => u.role === 'landlord').length;
   const admins = users.filter(u => u.role === 'admin').length;
@@ -190,7 +190,7 @@ export const generatePlatformOverviewPDF = async (users, houses) => {
   ]);
 
   const html = wrapHTML(
-    getHeaderHTML('Platform Overview Report', `System snapshot — ${new Date().toDateString()}`) +
+    getHeaderHTML('Platform Overview Report', dateRange || `System snapshot — ${new Date().toDateString()}`) +
     getStatBoxHTML(stats) +
     '<h3>Listings by Location</h3>' +
     getTableHTML(locHeaders, locRows) +
@@ -206,7 +206,7 @@ export const generatePlatformOverviewPDF = async (users, houses) => {
   await printOrShare(html, 'Platform_Overview');
 };
 
-export const generateAllPaymentsPDF = async (payments) => {
+export const generateAllPaymentsPDF = async (payments, dateRange = '') => {
   const totalRevenue = payments.reduce((a, p) => a + (Number(p.amount) || 0), 0);
 
   const stats = [
@@ -226,7 +226,7 @@ export const generateAllPaymentsPDF = async (payments) => {
   rows.push(['', '', '<strong>TOTAL</strong>', `<strong>$${totalRevenue}</strong>`, '', '']);
 
   const html = wrapHTML(
-    getHeaderHTML('All Payments Report', `${payments.length} transactions recorded`) +
+    getHeaderHTML('All Payments Report', dateRange || `${payments.length} transactions recorded`) +
     getStatBoxHTML(stats) +
     '<h3>Payment Transactions</h3>' +
     getTableHTML(headers, rows) +
@@ -236,7 +236,7 @@ export const generateAllPaymentsPDF = async (payments) => {
   await printOrShare(html, 'All_Payments');
 };
 
-export const generateUsersPDF = async (users) => {
+export const generateUsersPDF = async (users, dateRange = '') => {
   const headers = ['#', 'Name', 'Email', 'Role', 'Verified'];
   const rows = users.map((u, i) => [
     i + 1,
@@ -247,7 +247,7 @@ export const generateUsersPDF = async (users) => {
   ]);
 
   const html = wrapHTML(
-    getHeaderHTML('User Management Report', `${users.length} registered users`) +
+    getHeaderHTML('User Management Report', dateRange || `${users.length} registered users`) +
     getStatBoxHTML([
       { label: 'Total Users', value: users.length, color: '#007BFF' },
       { label: 'Verified', value: users.filter(u => u.verificationStatus === 'verified').length, color: '#4CAF50' },
@@ -260,7 +260,7 @@ export const generateUsersPDF = async (users) => {
   await printOrShare(html, 'User_Report');
 };
 
-export const generateIssuesPDF = async (reports) => {
+export const generateIssuesPDF = async (reports, dateRange = '') => {
   const headers = ['#', 'Type', 'Reporter', 'Role', 'Description', 'Date'];
   const rows = reports.map((r, i) => [
     i + 1,
@@ -272,7 +272,7 @@ export const generateIssuesPDF = async (reports) => {
   ]);
 
   const html = wrapHTML(
-    getHeaderHTML('Issue Reports', `${reports.length} reports submitted`) +
+    getHeaderHTML('Issue Reports', dateRange || `${reports.length} reports submitted`) +
     '<h3>All Reported Issues</h3>' +
     getTableHTML(headers, rows) +
     getFooterHTML()

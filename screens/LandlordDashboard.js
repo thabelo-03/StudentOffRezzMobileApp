@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, Alert, TextInput, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../database/firebaseConfig';
@@ -21,6 +22,27 @@ const LandlordDashboard = ({ navigation }) => {
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [reportText, setReportText] = useState('');
   const [reportGenerating, setReportGenerating] = useState(null);
+
+  // Date filter for reports
+  const [reportFromDate, setReportFromDate] = useState(() => {
+    const d = new Date(); d.setMonth(d.getMonth() - 1); return d;
+  });
+  const [reportToDate, setReportToDate] = useState(new Date());
+  const [showFromPicker, setShowFromPicker] = useState(false);
+  const [showToPicker, setShowToPicker] = useState(false);
+
+  const filterByDate = (data) => {
+    const from = new Date(reportFromDate); from.setHours(0, 0, 0, 0);
+    const to = new Date(reportToDate); to.setHours(23, 59, 59, 999);
+    return data.filter(item => {
+      const dt = item.timestamp || item.paymentDate || item.createdAt;
+      if (!dt) return true;
+      const d = new Date(dt);
+      return d >= from && d <= to;
+    });
+  };
+
+  const dateLabel = (date) => date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 
   const fetchData = async () => {
     try {
@@ -262,18 +284,53 @@ const LandlordDashboard = ({ navigation }) => {
 
         {/* Download Reports Section */}
         <Text style={styles.sectionTitle}>Download Reports</Text>
+
+        {/* Date Filter */}
+        <View style={styles.dateFilterBox}>
+          <View style={styles.dateFilterRow}>
+            <TouchableOpacity style={styles.dateFilterBtn} onPress={() => setShowFromPicker(true)}>
+              <Icon name="calendar-start" size={16} color="#007BFF" />
+              <Text style={styles.dateFilterText}>{dateLabel(reportFromDate)}</Text>
+            </TouchableOpacity>
+            <Text style={{ color: '#999', marginHorizontal: 8 }}>to</Text>
+            <TouchableOpacity style={styles.dateFilterBtn} onPress={() => setShowToPicker(true)}>
+              <Icon name="calendar-end" size={16} color="#007BFF" />
+              <Text style={styles.dateFilterText}>{dateLabel(reportToDate)}</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.presetRow}>
+            {[{ label: '7 Days', days: 7 }, { label: '30 Days', days: 30 }, { label: '90 Days', days: 90 }, { label: 'All', days: 365*5 }].map(p => (
+              <TouchableOpacity key={p.label} style={styles.presetBtn} onPress={() => {
+                const d = new Date(); d.setDate(d.getDate() - p.days);
+                setReportFromDate(d); setReportToDate(new Date());
+              }}>
+                <Text style={styles.presetText}>{p.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {showFromPicker && (
+          <DateTimePicker value={reportFromDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={(e, d) => { setShowFromPicker(false); if (d) setReportFromDate(d); }} />
+        )}
+        {showToPicker && (
+          <DateTimePicker value={reportToDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={(e, d) => { setShowToPicker(false); if (d) setReportToDate(d); }} />
+        )}
+
         <View style={styles.reportGrid}>
           {[
             { id: 'prop_pdf', title: 'Properties', subtitle: 'PDF', icon: 'home-city', color: '#007BFF',
-              action: async () => { const r = await api.get('/listings/mine'); await generatePropertiesPDF(r.data || []); } },
+              action: async () => { const r = await api.get('/listings/mine'); const dateRange = `${dateLabel(reportFromDate)} — ${dateLabel(reportToDate)}`; await generatePropertiesPDF(filterByDate(r.data || []), dateRange); } },
             { id: 'prop_csv', title: 'Properties', subtitle: 'Excel', icon: 'file-excel', color: '#217346',
-              action: async () => { const r = await api.get('/listings/mine'); await generatePropertiesCSV(r.data || []); } },
+              action: async () => { const r = await api.get('/listings/mine'); await generatePropertiesCSV(filterByDate(r.data || [])); } },
             { id: 'book_pdf', title: 'Bookings', subtitle: 'PDF', icon: 'book-outline', color: '#FF9800',
-              action: async () => { const r = await api.get('/bookings/landlord'); await generateBookingsPDF(r.data || []); } },
+              action: async () => { const r = await api.get('/bookings/landlord'); const dateRange = `${dateLabel(reportFromDate)} — ${dateLabel(reportToDate)}`; await generateBookingsPDF(filterByDate(r.data || []), dateRange); } },
             { id: 'book_csv', title: 'Bookings', subtitle: 'Excel', icon: 'file-excel', color: '#217346',
-              action: async () => { const r = await api.get('/bookings/landlord'); await generateBookingsCSV(r.data || []); } },
+              action: async () => { const r = await api.get('/bookings/landlord'); await generateBookingsCSV(filterByDate(r.data || [])); } },
             { id: 'rev_pdf', title: 'Revenue', subtitle: 'PDF', icon: 'cash-multiple', color: '#4CAF50',
-              action: async () => { const r = await api.get('/bookings/landlord'); await generateRevenuePDF(r.data || []); } },
+              action: async () => { const r = await api.get('/bookings/landlord'); const dateRange = `${dateLabel(reportFromDate)} — ${dateLabel(reportToDate)}`; await generateRevenuePDF(filterByDate(r.data || []), dateRange); } },
           ].map((report) => (
             <TouchableOpacity
               key={report.id}
@@ -394,6 +451,15 @@ const styles = StyleSheet.create({
   reportCardTitle: { fontSize: 11, fontWeight: '600', color: '#333', marginTop: 8, textAlign: 'center' },
   reportBadge: { marginTop: 6, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   reportBadgeText: { fontSize: 10, fontWeight: 'bold' },
+
+  // Date Filter
+  dateFilterBox: { backgroundColor: '#FFF', borderRadius: 12, padding: 12, marginBottom: 12, elevation: 1 },
+  dateFilterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  dateFilterBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0F4FF', borderRadius: 8, padding: 10, gap: 6, borderWidth: 1, borderColor: '#D0DCFF' },
+  dateFilterText: { fontSize: 13, fontWeight: '500', color: '#007BFF' },
+  presetRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, gap: 6 },
+  presetBtn: { flex: 1, backgroundColor: '#F5F5F5', paddingVertical: 7, borderRadius: 6, alignItems: 'center' },
+  presetText: { fontSize: 11, fontWeight: '600', color: '#555' },
 });
 
 export default LandlordDashboard;
