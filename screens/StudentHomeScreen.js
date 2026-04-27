@@ -681,7 +681,11 @@ const StudentHomeScreen = () => {
                      </View>
                      <View>
                         <Text style={styles.hostName}>Hosted by {activeHouse.landlordEmail ? activeHouse.landlordEmail.split('@')[0] : 'Landlord'}</Text>
-                        <Text style={styles.hostSub}>Joined in 2024</Text>
+                        <Text style={styles.hostSub}>
+                          {activeHouse.createdAt 
+                            ? `Listed ${new Date(activeHouse.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}` 
+                            : 'Landlord'}
+                        </Text>
                      </View>
                   </View>
 
