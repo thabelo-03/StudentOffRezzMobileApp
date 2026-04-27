@@ -28,6 +28,9 @@ router.get('/mine', auth, async (req, res) => {
         return house.landlordEmail?.toLowerCase() === userEmail?.toLowerCase();
       });
 
+    // Sort by newest first
+    myHouses.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
     console.log(`✅ Success: Found ${myHouses.length} properties for ${userEmail}`);
     res.json(myHouses);
 

@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from 'expo-image-manipulator';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -82,7 +83,9 @@ const MyListings = () => {
       setCurrentUser(user);
 
       const response = await api.get('/listings/mine');
-      setHouses(response.data);
+      // Sort by newest first
+      const sorted = (response.data || []).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setHouses(sorted);
     } catch (error) {
       console.error('Error fetching houses:', error);
       Alert.alert('Error', 'Failed to fetch houses.');
@@ -104,7 +107,7 @@ const MyListings = () => {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: 'Images',
-        quality: 0.2, // Increased slightly for better quality
+        quality: 0.1,
         allowsMultipleSelection: true,
       });
 
@@ -126,19 +129,55 @@ const MyListings = () => {
   const convertImagesToBase64 = async () => {
     const processedUrls = [];
     for (const uri of imageUrls) {
-      if (uri.startsWith('http') || uri.startsWith('data:')) {
-        processedUrls.push(uri);
-        continue;
-      }
-      
       try {
-        const fileInfo = await FileSystem.getInfoAsync(uri);
-        console.log(`Processing image: ${uri} (Size: ${fileInfo.size} bytes)`);
-        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-        processedUrls.push(`data:image/jpeg;base64,${base64}`);
-        console.log(`Converted to Base64. Length: ${base64.length}`);
+        let sourceUri = uri;
+
+        // For existing http URLs, just keep them (they're already on server)
+        if (uri.startsWith('http')) {
+          processedUrls.push(uri);
+          console.log(`Keeping existing URL: ${uri.substring(0, 50)}...`);
+          continue;
+        }
+
+        // For data: URIs (previously loaded base64), keep as-is
+        if (uri.startsWith('data:')) {
+          processedUrls.push(uri);
+          console.log(`Keeping existing data URI (${(uri.length / 1024).toFixed(1)} KB)`);
+          continue;
+        }
+
+        // Compress local images aggressively
+        console.log(`Compressing image: ${uri.substring(uri.length - 30)}`);
+        const manipulated = await ImageManipulator.manipulateAsync(
+          sourceUri,
+          [{ resize: { width: 150 } }],
+          { compress: 0.1, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        );
+        
+        if (manipulated.base64) {
+          const sizeKB = (manipulated.base64.length / 1024).toFixed(1);
+          console.log(`✅ Compressed to ~${sizeKB} KB`);
+          processedUrls.push(`data:image/jpeg;base64,${manipulated.base64}`);
+        } else {
+          // Fallback: read the compressed file
+          const base64 = await FileSystem.readAsStringAsync(manipulated.uri, { encoding: FileSystem.EncodingType.Base64 });
+          console.log(`✅ Fallback compressed to ~${(base64.length / 1024).toFixed(1)} KB`);
+          processedUrls.push(`data:image/jpeg;base64,${base64}`);
+        }
       } catch (error) {
-        console.log("Error converting image:", error);
+        console.log("❌ Image compression error:", error.message || error);
+        // Last resort: try reading original at lowest quality
+        try {
+          const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+          if (base64.length < 50000) { // Only include if under ~50KB
+            processedUrls.push(`data:image/jpeg;base64,${base64}`);
+            console.log(`⚠️ Used uncompressed (${(base64.length / 1024).toFixed(1)} KB)`);
+          } else {
+            console.log(`⚠️ Skipped - too large (${(base64.length / 1024).toFixed(1)} KB)`);
+          }
+        } catch (e) {
+          console.log("❌ Could not read image at all:", e.message);
+        }
       }
     }
     return processedUrls;
@@ -163,12 +202,23 @@ const MyListings = () => {
         availableSpots: Number(availableSpots) || 0,
         genderPolicy,
         amenities: amenities,
-        imageUrls: finalImageUrls, // Key matches student-side
-        createdAt: Date.now(), // Add timestamp for "Posted x mins ago"
+        imageUrls: finalImageUrls,
+        createdAt: Date.now(),
       };
 
       const payloadSize = JSON.stringify(houseData).length;
-      console.log(`Total Payload Size: ${(payloadSize / 1024).toFixed(2)} KB`);
+      const payloadKB = (payloadSize / 1024).toFixed(2);
+      console.log(`Total Payload Size: ${payloadKB} KB`);
+
+      // Warn if payload is still too large (Render default ~100KB)
+      if (payloadSize > 900000) {
+        Alert.alert(
+          'Images Too Large', 
+          `Total size is ${payloadKB} KB. Please use fewer or smaller images (max 1MB allowed).`
+        );
+        setLoading(false);
+        return;
+      }
 
       if (editingHouseId) {
         await api.put(`/houses/${editingHouseId}`, houseData);
@@ -184,7 +234,11 @@ const MyListings = () => {
       if (error.response) console.log("Server Error Details:", error.response.data);
       
       if (error.response && error.response.status === 413) {
-        Alert.alert('Upload Failed', 'Images are too large. Please try fewer images.');
+        Alert.alert(
+          'Upload Failed', 
+          'Images are too large for the server. Try:\n\n• Use only 1 image\n• Pick a smaller photo\n• Remove images and re-pick them',
+          [{ text: 'OK' }]
+        );
       } else {
         Alert.alert('Error', error.response?.data?.error || 'Failed to save property');
       }
@@ -263,10 +317,10 @@ const MyListings = () => {
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.editBtn} onPress={() => handleEdit(house)}>
-              <Icon name="edit" color="#007BFF" /> <Text style={styles.editBtnText}>Edit</Text>
+              <Icon name="edit" color="#007BFF" /><Text style={styles.editBtnText}> Edit</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.deleteBtn} onPress={() => removeHouse(house.id)}>
-              <Icon name="trash" color="red" /> <Text style={styles.deleteBtnText}>Delete</Text>
+              <Icon name="trash" color="red" /><Text style={styles.deleteBtnText}> Delete</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -351,7 +405,7 @@ const MyListings = () => {
           <TextInput style={[styles.input, {height: 80}]} value={description} onChangeText={setDescription} multiline />
 
           <TouchableOpacity style={styles.uploadBtn} onPress={pickImage}>
-            <Icon name="camera" color="#fff" /> <Text style={styles.whiteText}>Add Photos (Max 3)</Text>
+            <Icon name="camera" color="#fff" /><Text style={styles.whiteText}> Add Photos (Max 3)</Text>
           </TouchableOpacity>
 
           <ScrollView horizontal style={styles.previewContainer} showsHorizontalScrollIndicator={false}>

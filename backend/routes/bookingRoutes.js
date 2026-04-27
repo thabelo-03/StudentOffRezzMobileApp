@@ -39,7 +39,19 @@ router.post('/confirm', auth, async (req, res) => {
       });
     }
 
-    // 4. Simulate Sending Email (In production, use nodemailer here)
+    // 5. Decrement available spots on the house
+    if (booking.houseId) {
+      const houseRef = db.ref(`landlord/${booking.houseId}/availableSpots`);
+      const spotsSnapshot = await houseRef.once('value');
+      const currentSpots = Number(spotsSnapshot.val()) || 0;
+      
+      if (currentSpots > 0) {
+        await houseRef.set(currentSpots - 1);
+        console.log(`[SPOTS] House ${booking.houseId}: ${currentSpots} → ${currentSpots - 1} spots`);
+      }
+    }
+
+    // 6. Simulate Sending Email (In production, use nodemailer here)
     console.log(`[EMAIL SERVICE] Sending Payment Receipt to Student: ${booking.studentEmail}`);
     console.log(`[EMAIL SERVICE] Subject: Payment Successful - Transaction ${transactionId}`);
     console.log(`[EMAIL SERVICE] Body: Your payment for ${booking.houseName} was successful. Transaction ID: ${transactionId}`);

@@ -32,6 +32,9 @@ router.get('/', async (req, res) => {
       return house;
     }));
 
+    // Sort by newest first
+    enrichedHouses.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
     res.json(enrichedHouses);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching listings' });

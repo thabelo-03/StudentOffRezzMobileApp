@@ -134,7 +134,9 @@ const StudentHomeScreen = () => {
   const fetchHouses = async () => {
     try {
       const response = await api.get('/houses');
-      setHouses(response.data);
+      // Sort by newest first
+      const sorted = (response.data || []).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setHouses(sorted);
     } catch (error) {
       Alert.alert('Error', 'Could not load listings.');
     } finally {
