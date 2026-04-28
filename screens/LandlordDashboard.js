@@ -319,37 +319,43 @@ const LandlordDashboard = ({ navigation }) => {
             onChange={(e, d) => { setShowToPicker(false); if (d) setReportToDate(d); }} />
         )}
 
-        <View style={styles.reportGrid}>
+        <View style={styles.reportList}>
           {[
-            { id: 'prop_pdf', title: 'Properties', subtitle: 'PDF', icon: 'home-city', color: '#007BFF',
-              action: async () => { const r = await api.get('/listings/mine'); const dateRange = `${dateLabel(reportFromDate)} — ${dateLabel(reportToDate)}`; await generatePropertiesPDF(filterByDate(r.data || []), dateRange); } },
-            { id: 'prop_csv', title: 'Properties', subtitle: 'Excel', icon: 'file-excel', color: '#217346',
+            { id: 'prop_pdf', title: 'My Properties', subtitle: 'All listings with details', icon: 'home-city', color: '#007BFF', format: 'PDF',
+              action: async () => { const r = await api.get('/listings/mine'); const dr = dateLabel(reportFromDate) + ' - ' + dateLabel(reportToDate); await generatePropertiesPDF(filterByDate(r.data || []), dr); } },
+            { id: 'prop_csv', title: 'My Properties', subtitle: 'Export as spreadsheet', icon: 'file-excel', color: '#217346', format: 'Excel',
               action: async () => { const r = await api.get('/listings/mine'); await generatePropertiesCSV(filterByDate(r.data || [])); } },
-            { id: 'book_pdf', title: 'Bookings', subtitle: 'PDF', icon: 'book-outline', color: '#FF9800',
-              action: async () => { const r = await api.get('/bookings/landlord'); const dateRange = `${dateLabel(reportFromDate)} — ${dateLabel(reportToDate)}`; await generateBookingsPDF(filterByDate(r.data || []), dateRange); } },
-            { id: 'book_csv', title: 'Bookings', subtitle: 'Excel', icon: 'file-excel', color: '#217346',
+            { id: 'book_pdf', title: 'Booking Summary', subtitle: 'All bookings with status', icon: 'book-outline', color: '#FF9800', format: 'PDF',
+              action: async () => { const r = await api.get('/bookings/landlord'); const dr = dateLabel(reportFromDate) + ' - ' + dateLabel(reportToDate); await generateBookingsPDF(filterByDate(r.data || []), dr); } },
+            { id: 'book_csv', title: 'Booking Summary', subtitle: 'Export as spreadsheet', icon: 'file-excel', color: '#217346', format: 'Excel',
               action: async () => { const r = await api.get('/bookings/landlord'); await generateBookingsCSV(filterByDate(r.data || [])); } },
-            { id: 'rev_pdf', title: 'Revenue', subtitle: 'PDF', icon: 'cash-multiple', color: '#4CAF50',
-              action: async () => { const r = await api.get('/bookings/landlord'); const dateRange = `${dateLabel(reportFromDate)} — ${dateLabel(reportToDate)}`; await generateRevenuePDF(filterByDate(r.data || []), dateRange); } },
+            { id: 'rev_pdf', title: 'Revenue Report', subtitle: 'Paid transactions & totals', icon: 'cash-multiple', color: '#4CAF50', format: 'PDF',
+              action: async () => { const r = await api.get('/bookings/landlord'); const dr = dateLabel(reportFromDate) + ' - ' + dateLabel(reportToDate); await generateRevenuePDF(filterByDate(r.data || []), dr); } },
           ].map((report) => (
             <TouchableOpacity
               key={report.id}
-              style={styles.reportCard}
+              style={styles.reportListItem}
               disabled={reportGenerating !== null}
               onPress={async () => {
                 setReportGenerating(report.id);
-                try { await report.action(); } catch (e) { Alert.alert('Error', 'Failed to generate report.'); }
+                try { await report.action(); } catch (e) { console.error(e); Alert.alert('Error', 'Failed to generate report.'); }
                 setReportGenerating(null);
               }}
+              activeOpacity={0.7}
             >
-              {reportGenerating === report.id ? (
-                <ActivityIndicator size="small" color={report.color} />
-              ) : (
-                <Icon name={report.icon} size={24} color={report.color} />
-              )}
-              <Text style={styles.reportCardTitle}>{report.title}</Text>
-              <View style={[styles.reportBadge, { backgroundColor: report.color + '20' }]}>
-                <Text style={[styles.reportBadgeText, { color: report.color }]}>{report.subtitle}</Text>
+              <View style={[styles.reportIconBox, { backgroundColor: report.color + '15' }]}>
+                <Icon name={report.icon} size={22} color={report.color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.reportItemTitle}>{report.title}</Text>
+                <Text style={styles.reportItemSub}>{report.subtitle}</Text>
+              </View>
+              <View style={styles.reportFormatBadge}>
+                {reportGenerating === report.id ? (
+                  <ActivityIndicator size="small" color={report.color} />
+                ) : (
+                  <Text style={[styles.reportFormatText, { color: report.color }]}>{report.format}</Text>
+                )}
               </View>
             </TouchableOpacity>
           ))}
@@ -442,15 +448,24 @@ const styles = StyleSheet.create({
   whiteText: { color: '#fff', fontWeight: 'bold' },
   cancelText: { color: '#666' },
 
-  // Report Section
-  reportGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10 },
-  reportCard: {
-    backgroundColor: '#FFF', borderRadius: 12, padding: 15, width: '31%',
-    alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOpacity: 0.05,
+  // Report Section - Compact List Style
+  reportList: { gap: 8, marginBottom: 20 },
+  reportListItem: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF',
+    borderRadius: 10, padding: 12, elevation: 1,
+    shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 3,
   },
-  reportCardTitle: { fontSize: 11, fontWeight: '600', color: '#333', marginTop: 8, textAlign: 'center' },
-  reportBadge: { marginTop: 6, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  reportBadgeText: { fontSize: 10, fontWeight: 'bold' },
+  reportIconBox: {
+    width: 40, height: 40, borderRadius: 10,
+    justifyContent: 'center', alignItems: 'center', marginRight: 12,
+  },
+  reportItemTitle: { fontSize: 14, fontWeight: '600', color: '#333' },
+  reportItemSub: { fontSize: 12, color: '#888', marginTop: 2 },
+  reportFormatBadge: {
+    backgroundColor: '#F5F5F5', paddingHorizontal: 10, paddingVertical: 5,
+    borderRadius: 6, minWidth: 42, alignItems: 'center',
+  },
+  reportFormatText: { fontWeight: 'bold', fontSize: 11 },
 
   // Date Filter
   dateFilterBox: { backgroundColor: '#FFF', borderRadius: 12, padding: 12, marginBottom: 12, elevation: 1 },
