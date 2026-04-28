@@ -318,18 +318,33 @@ export const generateCSV = async (headers, rows, filename) => {
     }
     const csvContent = lines.join('\n');
 
-    const fileUri = FileSystem.documentDirectory + filename + '.csv';
-    await FileSystem.writeAsStringAsync(fileUri, csvContent, { encoding: FileSystem.EncodingType.UTF8 });
-
-    const canShare = await Sharing.isAvailableAsync();
-    if (canShare) {
-      await Sharing.shareAsync(fileUri, { 
-        mimeType: 'text/csv', 
-        dialogTitle: 'Export ' + filename,
-        UTI: 'public.comma-separated-values-text'
-      });
+    if (Platform.OS === 'web') {
+      // Web: download via browser
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename + '.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      Alert.alert('Success', 'Report downloaded as ' + filename + '.csv');
     } else {
-      Alert.alert('Success', 'Report saved successfully.');
+      // Native: write file and share
+      const fileUri = FileSystem.documentDirectory + filename + '.csv';
+      await FileSystem.writeAsStringAsync(fileUri, csvContent, { encoding: FileSystem.EncodingType.UTF8 });
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(fileUri, { 
+          mimeType: 'text/csv', 
+          dialogTitle: 'Export ' + filename,
+          UTI: 'public.comma-separated-values-text'
+        });
+      } else {
+        Alert.alert('Success', 'Report saved successfully.');
+      }
     }
   } catch (error) {
     console.error('CSV Generation Error:', error);
@@ -380,26 +395,38 @@ export const generateUsersCSV = async (users) => {
 
 const exportPDF = async (html, filename) => {
   try {
-    // Generate PDF file from HTML
-    const result = await Print.printToFileAsync({
-      html: html,
-      width: 612,  // US Letter width in points
-      height: 792, // US Letter height in points
-    });
-    
-    // Move to a readable location with proper name
-    const newUri = FileSystem.documentDirectory + filename + '_' + Date.now() + '.pdf';
-    await FileSystem.moveAsync({ from: result.uri, to: newUri });
-
-    const canShare = await Sharing.isAvailableAsync();
-    if (canShare) {
-      await Sharing.shareAsync(newUri, { 
-        mimeType: 'application/pdf', 
-        dialogTitle: 'Share ' + filename,
-        UTI: 'com.adobe.pdf'
-      });
+    if (Platform.OS === 'web') {
+      // Web: open print dialog with the HTML content
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => { printWindow.print(); }, 500);
+      } else {
+        Alert.alert('Error', 'Please allow pop-ups to generate PDF reports.');
+      }
     } else {
-      Alert.alert('Success', 'PDF report generated successfully.');
+      // Native: generate PDF file and share
+      const result = await Print.printToFileAsync({
+        html: html,
+        width: 612,
+        height: 792,
+      });
+      
+      const newUri = FileSystem.documentDirectory + filename + '_' + Date.now() + '.pdf';
+      await FileSystem.moveAsync({ from: result.uri, to: newUri });
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(newUri, { 
+          mimeType: 'application/pdf', 
+          dialogTitle: 'Share ' + filename,
+          UTI: 'com.adobe.pdf'
+        });
+      } else {
+        Alert.alert('Success', 'PDF report generated successfully.');
+      }
     }
   } catch (error) {
     console.error('PDF Generation Error:', error);
