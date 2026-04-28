@@ -320,16 +320,22 @@ export const generateCSV = async (headers, rows, filename) => {
 
     if (Platform.OS === 'web') {
       // Web: download via browser
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename + '.csv';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      Alert.alert('Success', 'Report downloaded as ' + filename + '.csv');
+      try {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename + '.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        // Delay revoke to ensure download starts
+        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+      } catch (webErr) {
+        console.error('Web CSV Error:', webErr);
+        window.alert('Failed to download CSV file.');
+      }
     } else {
       // Native: write file and share
       const fileUri = FileSystem.documentDirectory + filename + '.csv';
@@ -348,7 +354,11 @@ export const generateCSV = async (headers, rows, filename) => {
     }
   } catch (error) {
     console.error('CSV Generation Error:', error);
-    Alert.alert('Error', 'Failed to generate Excel report: ' + (error.message || ''));
+    if (Platform.OS === 'web') {
+      window.alert('Failed to generate report: ' + (error.message || ''));
+    } else {
+      Alert.alert('Error', 'Failed to generate Excel report: ' + (error.message || ''));
+    }
   }
 };
 
