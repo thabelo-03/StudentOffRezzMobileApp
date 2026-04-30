@@ -414,11 +414,11 @@ const StudentHomeScreen = () => {
         </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconBtn}>
-            <Icon name="bell-outline" size={26} color="#333" />
+            <Icon name="bell-outline" size={24} color="#FFF" />
             <View style={styles.badgeDot} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn} onPress={() => setMenuVisible(true)}>
-            <Icon name="dots-vertical" size={28} color="#333" />
+            <Icon name="dots-vertical" size={26} color="#FFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -757,40 +757,40 @@ const StudentHomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FB' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 50, backgroundColor: '#FFF', elevation: 2 },
+  container: { flex: 1, backgroundColor: '#f0f2f5' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 18, paddingTop: 50, backgroundColor: '#1a365d' },
   userRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  onlineDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#4CAF50', marginTop: 2 },
-  greeting: { fontSize: 16, color: '#717171', fontWeight: '500' },
-  headerTitle: { fontSize: 28, fontWeight: '800', color: '#222', marginTop: 4, letterSpacing: -0.5 },
-  headerIcons: { flexDirection: 'row', gap: 15 },
-  iconBtn: { padding: 5, position: 'relative' },
-  badgeDot: { position: 'absolute', top: 5, right: 5, width: 8, height: 8, borderRadius: 4, backgroundColor: 'red' },
+  onlineDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#48bb78', marginTop: 2 },
+  greeting: { fontSize: 14, color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
+  headerTitle: { fontSize: 26, fontWeight: '800', color: '#FFF', marginTop: 3, letterSpacing: -0.5 },
+  headerIcons: { flexDirection: 'row', gap: 12 },
+  iconBtn: { padding: 6, position: 'relative', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 10 },
+  badgeDot: { position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: 4, backgroundColor: '#fc8181' },
   
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 12, marginHorizontal: 15, marginTop: 15, marginBottom: 10, height: 48, elevation: 2 },
-  searchInput: { flex: 1, marginLeft: 10 },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 14, marginHorizontal: 15, marginTop: 15, marginBottom: 10, height: 50, elevation: 4, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10 },
+  searchInput: { flex: 1, marginLeft: 10, fontSize: 14 },
   
-  card: { backgroundColor: '#fff', borderRadius: 16, marginBottom: 20, marginHorizontal: 15, elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5 },
+  card: { backgroundColor: '#fff', borderRadius: 18, marginBottom: 16, marginHorizontal: 15, elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 12 },
   cardImageWrapper: { position: 'relative' },
-  cardImage: { width: '100%', height: 200, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
-  placeholderBox: { justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee' },
-  heartBtn: { position: 'absolute', top: 15, right: 15, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20, padding: 8 },
-  priceBadge: { position: 'absolute', bottom: 15, left: 15, backgroundColor: '#FFF', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, elevation: 2 },
-  priceText: { fontWeight: 'bold', color: '#333' },
-  timeBadge: { position: 'absolute', top: 15, left: 15, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  timeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
-  bookingStatusBadge: { position: 'absolute', bottom: 15, right: 15, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, elevation: 3 },
-  bookingStatusText: { color: '#fff', fontWeight: 'bold', fontSize: 12 },
+  cardImage: { width: '100%', height: 200, borderTopLeftRadius: 18, borderTopRightRadius: 18 },
+  placeholderBox: { justifyContent: 'center', alignItems: 'center', backgroundColor: '#e2e8f0' },
+  heartBtn: { position: 'absolute', top: 15, right: 15, backgroundColor: 'rgba(0,0,0,0.35)', borderRadius: 22, padding: 8 },
+  priceBadge: { position: 'absolute', bottom: 15, left: 15, backgroundColor: '#FFF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, elevation: 3 },
+  priceText: { fontWeight: '800', color: '#1a365d', fontSize: 16 },
+  timeBadge: { position: 'absolute', top: 15, left: 15, backgroundColor: 'rgba(0,0,0,0.55)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14 },
+  timeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  bookingStatusBadge: { position: 'absolute', bottom: 15, right: 15, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 22, elevation: 3 },
+  bookingStatusText: { color: '#fff', fontWeight: '700', fontSize: 12 },
   
-  cardContent: { padding: 15 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 },
-  houseName: { fontSize: 18, fontWeight: 'bold', color: '#333', flex: 1 },
-  ratingContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF9C4', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-  ratingText: { fontSize: 12, fontWeight: 'bold', marginLeft: 4, color: '#333' },
+  cardContent: { padding: 16 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  houseName: { fontSize: 17, fontWeight: '700', color: '#1a365d', flex: 1 },
+  ratingContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fefcbf', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  ratingText: { fontSize: 12, fontWeight: '700', marginLeft: 4, color: '#744210' },
   locationRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  locationText: { color: '#666', fontSize: 14, marginLeft: 4 },
+  locationText: { color: '#718096', fontSize: 13, marginLeft: 4 },
   featuresRow: { flexDirection: 'row', alignItems: 'center' },
-  featureText: { fontSize: 12, color: '#888', backgroundColor: '#F5F5F5', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
+  featureText: { fontSize: 12, color: '#4a5568', backgroundColor: '#edf2f7', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 },
 
   starRow: { flexDirection: 'row' },
   
@@ -863,12 +863,12 @@ const styles = StyleSheet.create({
   divider: { height: 1, backgroundColor: '#EEEEEE', marginVertical: 20 },
 
   // Filter Styles
-  filterRow: { marginBottom: 15, height: 40 },
-  filterBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#DDD', marginRight: 0 },
-  filterBtnActive: { backgroundColor: '#007BFF', borderColor: '#007BFF' },
-  filterBtnText: { marginRight: 5, color: '#333', fontWeight: '500' },
+  filterRow: { marginBottom: 15, height: 42 },
+  filterBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 22, borderWidth: 1, borderColor: '#e2e8f0', marginRight: 0, elevation: 1 },
+  filterBtnActive: { backgroundColor: '#3182ce', borderColor: '#3182ce' },
+  filterBtnText: { marginRight: 5, color: '#4a5568', fontWeight: '600', fontSize: 13 },
   filterBtnTextActive: { color: '#FFF' },
-  clearFilterBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#FF385C', justifyContent: 'center', alignItems: 'center' },
+  clearFilterBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#e53e3e', justifyContent: 'center', alignItems: 'center' },
   
   filterModalContent: { backgroundColor: '#FFF', width: '80%', borderRadius: 15, padding: 20, elevation: 5, maxHeight: '60%' },
   filterModalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, textAlign: 'center', color: '#333' },

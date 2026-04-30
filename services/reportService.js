@@ -125,12 +125,12 @@ export const buildPropertiesHTML = (listings, dateRange) => {
   const stats = buildStatCards([
     { label: 'Total Properties', value: listings.length, color: '#3182ce' },
     { label: 'Available Spots', value: totalSpots, color: '#38a169' },
-    { label: 'Avg Price', value: 'R' + avgPrice, color: '#dd6b20' },
+    { label: 'Avg Price', value: '$' + avgPrice, color: '#dd6b20' },
   ]);
 
   const table = buildTable(
     ['#', 'Property Title', 'Location', 'Price', 'Spots', 'Gender'],
-    listings.map((h, i) => [i + 1, h.title || 'N/A', h.location || 'N/A', 'R' + (h.price || 0), h.availableSpots || 0, h.genderPolicy || 'Mixed'])
+    listings.map((h, i) => [i + 1, h.title || 'N/A', h.location || 'N/A', '$' + (h.price || 0), h.availableSpots || 0, h.genderPolicy || 'Mixed'])
   );
 
   return buildHTML('Properties Report', listings.length + ' properties listed', dateRange,
@@ -154,7 +154,7 @@ export const buildBookingsHTML = (bookings, dateRange) => {
     ['#', 'Property', 'Student', 'Amount', 'Status', 'Date'],
     bookings.map((b, i) => [
       i + 1, b.houseName || b.houseTitle || 'N/A', b.studentEmail || b.studentName || 'N/A',
-      'R' + (b.amount || 0), statusBadge(b.status),
+      '$' + (b.amount || 0), statusBadge(b.status),
       b.timestamp ? new Date(b.timestamp).toLocaleDateString() : 'N/A'
     ])
   );
@@ -169,21 +169,21 @@ export const buildRevenueHTML = (bookings, dateRange) => {
   const avgTx = paidBookings.length > 0 ? (totalRevenue / paidBookings.length).toFixed(0) : '0';
 
   const stats = buildStatCards([
-    { label: 'Total Revenue', value: 'R' + totalRevenue, color: '#38a169' },
+    { label: 'Total Revenue', value: '$' + totalRevenue, color: '#38a169' },
     { label: 'Transactions', value: paidBookings.length, color: '#3182ce' },
-    { label: 'Average', value: 'R' + avgTx, color: '#dd6b20' },
+    { label: 'Average', value: '$' + avgTx, color: '#dd6b20' },
   ]);
 
   const rows = paidBookings.map((b, i) => [
     i + 1, b.houseName || b.houseTitle || 'N/A', b.studentEmail || 'N/A',
-    'R' + (b.amount || 0), b.transactionId || 'N/A',
+    '$' + (b.amount || 0), b.transactionId || 'N/A',
     b.paymentDate ? new Date(b.paymentDate).toLocaleDateString() : 'N/A'
   ]);
-  rows.push({ _total: true, cells: ['', '', '', '<b>R' + totalRevenue + '</b>', '', '<b>TOTAL</b>'] });
+  rows.push({ _total: true, cells: ['', '', '', '<b>$' + totalRevenue + '</b>', '', '<b>TOTAL</b>'] });
 
   const table = buildTable(['#', 'Property', 'Student', 'Amount', 'Trans ID', 'Date'], rows);
 
-  return buildHTML('Revenue Report', 'Total Revenue: R' + totalRevenue, dateRange,
+  return buildHTML('Revenue Report', 'Total Revenue: $' + totalRevenue, dateRange,
     stats + '<div class="section-title">Payment Transactions</div>' + table);
 };
 
@@ -219,15 +219,15 @@ export const buildPlatformOverviewHTML = (users, houses, dateRange) => {
 export const buildAllPaymentsHTML = (payments, dateRange) => {
   const totalRevenue = payments.reduce((a, p) => a + (Number(p.amount) || 0), 0);
   const stats = buildStatCards([
-    { label: 'Total Revenue', value: 'R' + totalRevenue, color: '#38a169' },
+    { label: 'Total Revenue', value: '$' + totalRevenue, color: '#38a169' },
     { label: 'Transactions', value: payments.length, color: '#3182ce' },
   ]);
 
   const rows = payments.map((p, i) => [
-    i + 1, p.houseName || 'N/A', p.studentEmail || 'N/A', 'R' + (p.amount || 0),
+    i + 1, p.houseName || 'N/A', p.studentEmail || 'N/A', '$' + (p.amount || 0),
     p.transactionId || 'N/A', p.paymentDate ? new Date(p.paymentDate).toLocaleDateString() : 'N/A'
   ]);
-  rows.push({ _total: true, cells: ['', '', '<b>TOTAL</b>', '<b>R' + totalRevenue + '</b>', '', ''] });
+  rows.push({ _total: true, cells: ['', '', '<b>TOTAL</b>', '<b>$' + totalRevenue + '</b>', '', ''] });
 
   const table = buildTable(['#', 'Property', 'Student', 'Amount', 'Trans ID', 'Date'], rows);
   return buildHTML('All Payments Report', payments.length + ' transactions', dateRange,
@@ -333,19 +333,19 @@ export const generateCSV = async (headers, rows, filename) => {
 };
 
 export const generatePropertiesCSV = async (listings) => {
-  const headers = ['Title', 'Location', 'Price (R)', 'Available Spots', 'Gender Policy', 'Date Listed'];
+  const headers = ['Title', 'Location', 'Price ($)', 'Available Spots', 'Gender Policy', 'Date Listed'];
   const rows = listings.map(h => [h.title || '', h.location || '', h.price || 0, h.availableSpots || 0, h.genderPolicy || 'Mixed', h.createdAt ? new Date(h.createdAt).toLocaleDateString() : 'N/A']);
   await generateCSV(headers, rows, 'Properties_Report');
 };
 
 export const generateBookingsCSV = async (bookings) => {
-  const headers = ['Property', 'Student', 'Amount (R)', 'Status', 'Transaction ID', 'Date'];
+  const headers = ['Property', 'Student', 'Amount ($)', 'Status', 'Transaction ID', 'Date'];
   const rows = bookings.map(b => [b.houseName || b.houseTitle || '', b.studentEmail || b.studentName || '', b.amount || 0, b.status || '', b.transactionId || 'N/A', b.timestamp ? new Date(b.timestamp).toLocaleDateString() : 'N/A']);
   await generateCSV(headers, rows, 'Bookings_Report');
 };
 
 export const generatePaymentsCSV = async (payments) => {
-  const headers = ['Property', 'Student', 'Amount (R)', 'Transaction ID', 'Payment Date'];
+  const headers = ['Property', 'Student', 'Amount ($)', 'Transaction ID', 'Payment Date'];
   const rows = payments.map(p => [p.houseName || '', p.studentEmail || '', p.amount || 0, p.transactionId || 'N/A', p.paymentDate ? new Date(p.paymentDate).toLocaleDateString() : 'N/A']);
   await generateCSV(headers, rows, 'Payments_Report');
 };

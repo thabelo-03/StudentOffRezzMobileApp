@@ -162,11 +162,11 @@ const LandlordDashboard = ({ navigation }) => {
         </View>
         <View style={styles.headerIcons}>
           <TouchableOpacity style={styles.iconBtn}>
-            <Icon name="bell-outline" size={26} color="#333" />
+            <Icon name="bell-outline" size={24} color="#FFF" />
             <View style={styles.badgeDot} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn} onPress={() => setMenuVisible(true)}>
-            <Icon name="dots-vertical" size={28} color="#333" />
+            <Icon name="dots-vertical" size={26} color="#FFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -403,36 +403,37 @@ const LandlordDashboard = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F4F6F8' },
+  container: { flex: 1, backgroundColor: '#f0f2f5' },
   header: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     alignItems: 'center', 
-    padding: 20, 
+    paddingHorizontal: 20,
+    paddingVertical: 18,
     paddingTop: 50, 
-    backgroundColor: '#FFF',
-    elevation: 2 
+    backgroundColor: '#1a365d',
   },
   userRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  onlineDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#4CAF50', marginTop: 2 },
-  greeting: { fontSize: 14, color: '#666' },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#333' },
-  headerIcons: { flexDirection: 'row', gap: 15 },
-  iconBtn: { padding: 5, position: 'relative' },
-  badgeDot: { position: 'absolute', top: 5, right: 5, width: 8, height: 8, borderRadius: 4, backgroundColor: 'red' },
+  onlineDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#48bb78', marginTop: 2 },
+  greeting: { fontSize: 13, color: 'rgba(255,255,255,0.7)' },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: '#FFF' },
+  headerIcons: { flexDirection: 'row', gap: 12 },
+  iconBtn: { padding: 6, position: 'relative', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 10 },
+  badgeDot: { position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: 4, backgroundColor: '#fc8181' },
   
   scrollContainer: { padding: 15 },
 
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 10, paddingHorizontal: 10, marginBottom: 20, elevation: 2, height: 45 },
-  searchInput: { flex: 1, marginLeft: 10, color: '#333' },
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 12, paddingHorizontal: 14, marginBottom: 18, elevation: 3, height: 48, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 8 },
+  searchInput: { flex: 1, marginLeft: 10, color: '#333', fontSize: 14 },
   
-  statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25 },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 22, gap: 10 },
   statBox: { 
-    backgroundColor: '#FFF', padding: 15, borderRadius: 10, width: '31%', 
-    alignItems: 'center', elevation: 2, borderBottomWidth: 4 
+    backgroundColor: '#FFF', padding: 16, borderRadius: 14, flex: 1, 
+    alignItems: 'center', elevation: 3, borderBottomWidth: 3,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8,
   },
-  statValue: { fontSize: 20, fontWeight: 'bold', color: '#333' },
-  statLabel: { fontSize: 10, color: '#888', textTransform: 'uppercase', marginTop: 5 },
+  statValue: { fontSize: 22, fontWeight: '800', color: '#1a365d' },
+  statLabel: { fontSize: 10, color: '#718096', textTransform: 'uppercase', marginTop: 4, letterSpacing: 0.5 },
 
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#333', marginLeft: 5 },
   

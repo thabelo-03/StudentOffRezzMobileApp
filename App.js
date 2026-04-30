@@ -40,9 +40,8 @@ function StudentTabs() {
     <Tab.Navigator 
       initialRouteName="Home"
       screenOptions={{
-        tabBarActiveTintColor: '#007BFF',
-        headerStyle: { backgroundColor: '#007BFF' },
-        headerTintColor: '#fff',
+        tabBarActiveTintColor: '#3182ce',
+        headerShown: false,
       }}
     >
       <Tab.Screen 
@@ -79,9 +78,8 @@ function LandlordTabs() {
     <Tab.Navigator 
       initialRouteName="Dashboard"
       screenOptions={{
-        tabBarActiveTintColor: '#007BFF',
-        headerStyle: { backgroundColor: '#007BFF' },
-        headerTintColor: '#fff',
+        tabBarActiveTintColor: '#3182ce',
+        headerShown: false,
       }}
     >
       <Tab.Screen 
