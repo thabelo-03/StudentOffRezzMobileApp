@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, Text, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { StyleSheet, View, TextInput, TouchableOpacity, Text, ActivityIndicator, Animated, Keyboard } from 'react-native';
 import { Image } from 'expo-image';
 import { useAssets } from 'expo-asset';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import { auth } from '../database/firebaseConfig'; // Import Firebase auth client SDK
@@ -17,6 +18,15 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Error state
+  const [errorMsg, setErrorMsg] = useState('');
+  const [errorType, setErrorType] = useState(''); // 'email', 'password', 'network', 'auth', 'general'
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  // Animation
+  const shakeAnim = useRef(new Animated.Value(0)).current;
+
   if (error) {
     console.error('Error loading assets:', error);
     return null;
@@ -26,44 +36,96 @@ export default function LoginScreen() {
 
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+  const triggerShake = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start();
+  };
+
+  const clearErrors = () => {
+    setErrorMsg('');
+    setErrorType('');
+    setEmailError('');
+    setPasswordError('');
+  };
+
+  const showError = (msg, type, fieldErrors = {}) => {
+    setErrorMsg(msg);
+    setErrorType(type);
+    if (fieldErrors.email) setEmailError(fieldErrors.email);
+    if (fieldErrors.password) setPasswordError(fieldErrors.password);
+    triggerShake();
+  };
+
   const handleLogin = async () => {
+    Keyboard.dismiss();
+    clearErrors();
+
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
 
-    // 1. Basic Input Validations
-    if (!trimmedEmail || !trimmedPassword) {
-      Alert.alert('Error', 'Email and Password cannot be empty.');
+    // 1. Empty email
+    if (!trimmedEmail && !trimmedPassword) {
+      showError('Please enter your email and password to sign in.', 'general', {
+        email: 'Email is required',
+        password: 'Password is required'
+      });
       return;
     }
 
+    if (!trimmedEmail) {
+      showError('Please enter your email address.', 'email', { email: 'Email is required' });
+      return;
+    }
+
+    // 2. Invalid email format
     if (!isValidEmail(trimmedEmail)) {
-      Alert.alert('Error', 'Please enter a valid email address.');
+      showError('That doesn\'t look like a valid email. Please check the format (e.g. user@example.com).', 'email', {
+        email: 'Invalid email format'
+      });
+      return;
+    }
+
+    // 3. Empty password
+    if (!trimmedPassword) {
+      showError('Please enter your password.', 'password', { password: 'Password is required' });
+      return;
+    }
+
+    // 4. Weak password (too short)
+    if (trimmedPassword.length < 6) {
+      showError('Password must be at least 6 characters long.', 'password', {
+        password: 'Too short (min 6 characters)'
+      });
       return;
     }
 
     setLoading(true);
 
     try {
-      // 2. Authenticate with Firebase client-side
+      // 5. Authenticate with Firebase client-side
       const userCredential = await signInWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
       const firebaseUser = userCredential.user;
 
-      // 3. Make API call to our backend to get custom token and user details (with role)
-      //    We use the relative path so it uses the baseURL from api.js (which includes /api)
+      // 6. Make API call to our backend to get custom token and user details (with role)
       const response = await api.post('/auth/login', {
         email: trimmedEmail,
         password: trimmedPassword,
       });
 
-      const { token, user } = response.data; // This token is the custom token from our backend
+      const { token, user } = response.data;
 
-      // 4. Store the custom token and user data for session management
+      // 7. Store the custom token and user data for session management
       await AsyncStorage.setItem('token', token);
       await AsyncStorage.setItem('user', JSON.stringify(user));
 
       setLoading(false);
 
-      // 5. Role-Based Navigation Logic
+      // 8. Role-Based Navigation Logic
       if (user.role === 'admin') {
         navigation.navigate('AdminDashboard');
       } else if (user.role === 'landlord') {
@@ -80,75 +142,146 @@ export default function LoginScreen() {
           navigation.navigate('Student');
         }
       } else {
-        Alert.alert('Error', 'User role is undefined.');
+        showError('Your account role is not recognized. Please contact support.', 'general');
       }
 
-    } catch (error) {
+    } catch (err) {
       setLoading(false);
-      console.error('Login Error:', error);
-      
-      let message = 'Login failed. Please try again.';
-      if (error.code && error.code.startsWith('auth/')) {
-        switch (error.code) {
+      console.error('Login Error:', err);
+
+      // Firebase Auth Errors
+      if (err.code && err.code.startsWith('auth/')) {
+        switch (err.code) {
           case 'auth/user-not-found':
+            showError('No account found with this email. Please check your email or sign up.', 'email', {
+              email: 'Account not found'
+            });
+            break;
           case 'auth/wrong-password':
-          case 'auth/invalid-credential': // Fallback for general incorrect credentials
+            showError('Incorrect password. Please try again or reset your password.', 'password', {
+              password: 'Incorrect password'
+            });
+            break;
+          case 'auth/invalid-credential':
+            showError('Invalid email or password. Please double-check your credentials.', 'auth');
+            break;
           case 'auth/invalid-email':
-            message = 'Invalid email or password.';
+            showError('The email address format is invalid. Please enter a valid email.', 'email', {
+              email: 'Invalid email format'
+            });
+            break;
+          case 'auth/user-disabled':
+            showError('This account has been disabled. Please contact support for assistance.', 'auth');
+            break;
+          case 'auth/too-many-requests':
+            showError('Too many failed login attempts. Please wait a few minutes and try again.', 'auth');
+            break;
+          case 'auth/network-request-failed':
+            showError('Network error. Please check your internet connection and try again.', 'network');
             break;
           default:
-            message = 'Authentication failed. Please check your credentials.';
+            showError('Authentication failed. Please check your credentials and try again.', 'auth');
         }
-      } else if (error.response) {
-        message = error.response.data.message || message;
-      } else if (error.request) {
-        message = 'No response from server. Check your network or IP address.';
+      } else if (err.response) {
+        // Backend API errors
+        const status = err.response.status;
+        const msg = err.response.data?.message || '';
+        if (status === 401) {
+          showError('Invalid credentials. Please check your email and password.', 'auth');
+        } else if (status === 403) {
+          showError('Your account is restricted. Please contact support.', 'auth');
+        } else if (status === 404) {
+          showError('Account not found. Please sign up first.', 'email', { email: 'Account not found' });
+        } else if (status >= 500) {
+          showError('Server is currently unavailable. Please try again later.', 'network');
+        } else {
+          showError(msg || 'Login failed. Please try again.', 'general');
+        }
+      } else if (err.request) {
+        // No response received - network issue
+        showError('Unable to reach the server. Please check your internet connection or try again later.', 'network');
       } else {
-        message = error.message;
+        showError('An unexpected error occurred. Please try again.', 'general');
       }
+    }
+  };
 
-      Alert.alert('Login Failed', message);
+  const getErrorIcon = () => {
+    switch (errorType) {
+      case 'network': return 'wifi-off';
+      case 'email': return 'email-alert-outline';
+      case 'password': return 'lock-alert-outline';
+      case 'auth': return 'shield-alert-outline';
+      default: return 'alert-circle-outline';
+    }
+  };
+
+  const getErrorColor = () => {
+    switch (errorType) {
+      case 'network': return '#dd6b20';
+      case 'auth': return '#e53e3e';
+      default: return '#e53e3e';
     }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
+      <Animated.View style={[styles.card, { transform: [{ translateX: shakeAnim }] }]}>
         <Image source={assets[0]} style={styles.logo} />
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Sign in to continue</Text>
 
-        <View style={styles.inputContainer}>
-          <Icon name="envelope" size={20} color="#007BFF" style={styles.iconmail} />
+        {/* Error Banner */}
+        {errorMsg !== '' && (
+          <View style={[styles.errorBanner, { borderLeftColor: getErrorColor() }]}>  
+            <MCIcon name={getErrorIcon()} size={20} color={getErrorColor()} />
+            <Text style={styles.errorBannerText}>{errorMsg}</Text>
+            <TouchableOpacity onPress={clearErrors} style={styles.errorClose}>
+              <MCIcon name="close" size={16} color="#999" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Email Input */}
+        <View style={[styles.inputContainer, emailError ? styles.inputError : null]}>
+          <Icon name="envelope" size={18} color={emailError ? '#e53e3e' : '#3182ce'} style={styles.iconmail} />
           <TextInput
             placeholder="Email"
+            placeholderTextColor="#a0aec0"
             style={styles.input}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(t) => { setEmail(t); if (emailError) setEmailError(''); if (errorMsg) clearErrors(); }}
             keyboardType="email-address"
             autoCapitalize="none"
           />
+          {emailError ? <MCIcon name="alert-circle" size={18} color="#e53e3e" /> : null}
         </View>
+        {emailError ? <Text style={styles.fieldError}>{emailError}</Text> : null}
 
-        <View style={styles.passwordContainer}>
-          <Icon name="lock" size={20} color="#007BFF" style={styles.iconpass} />
+        {/* Password Input */}
+        <View style={[styles.passwordContainer, passwordError ? styles.inputError : null]}>
+          <Icon name="lock" size={20} color={passwordError ? '#e53e3e' : '#3182ce'} style={styles.iconpass} />
           <TextInput
             placeholder="Password"
+            placeholderTextColor="#a0aec0"
             secureTextEntry={!passwordVisible}
             style={styles.passwordInput}
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(t) => { setPassword(t); if (passwordError) setPasswordError(''); if (errorMsg) clearErrors(); }}
           />
           <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} style={styles.eyeIconContainer}>
-            <Icon name={passwordVisible ? 'eye' : 'eye-slash'} size={20} color="#007BFF" />
+            <Icon name={passwordVisible ? 'eye' : 'eye-slash'} size={18} color="#3182ce" />
           </TouchableOpacity>
+          {passwordError ? <MCIcon name="alert-circle" size={18} color="#e53e3e" style={{ marginLeft: 4 }} /> : null}
         </View>
+        {passwordError ? <Text style={styles.fieldError}>{passwordError}</Text> : null}
 
-        <TouchableOpacity onPress={handleLogin} style={styles.button} disabled={loading}>
+        {/* Login Button */}
+        <TouchableOpacity onPress={handleLogin} style={styles.button} disabled={loading} activeOpacity={0.8}>
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Login</Text>
+            <Text style={styles.buttonText}>Sign In</Text>
           )}
         </TouchableOpacity>
 
@@ -158,27 +291,61 @@ export default function LoginScreen() {
         >
           <Text style={styles.signUpText}>Don't have an account? <Text style={styles.signUpHighlight}>Sign Up</Text></Text>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F4F6F8' },
-  card: { backgroundColor: '#ffffff', borderRadius: 20, padding: 30, width: '90%', elevation: 5, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10 },
-  logo: { width: 100, height: 100, borderRadius: 50, marginBottom: 20 },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 5, textAlign: 'center', color: '#333' },
-  subtitle: { fontSize: 16, color: '#666', marginBottom: 30 },
-  inputContainer: { flexDirection: 'row', alignItems: 'center', borderColor: '#ccc', borderWidth: 1, borderRadius: 15, marginBottom: 10, width: '100%', paddingHorizontal: 10 },
-  input: { flex: 1, height: 50, paddingLeft: 10 },
-  passwordContainer: { flexDirection: 'row', alignItems: 'center', borderColor: '#ccc', borderWidth: 1, borderRadius: 15, width: '100%', marginBottom: 15, paddingHorizontal: 10 },
-  passwordInput: { flex: 1, height: 50, paddingLeft: 10 },
-  eyeIconContainer: { padding: 5 },
-  iconmail: { marginRight: 5 },
-  iconpass: { marginRight: 5 },
-  button: { backgroundColor: '#007BFF', borderRadius: 25, height: 50, justifyContent: 'center', alignItems: 'center', width: '60%' },
-  buttonText: { color: '#ffffff', fontWeight: 'bold', fontSize: 18 },
-  signUpContainer: { marginTop: 15, padding: 10 },
-  signUpText: { color: '#666', fontSize: 14, textAlign: 'center' },
-  signUpHighlight: { color: '#007BFF', fontWeight: 'bold' },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f0f2f5' },
+  card: { 
+    backgroundColor: '#ffffff', borderRadius: 22, padding: 30, width: '90%', 
+    elevation: 6, alignItems: 'center', 
+    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 15, shadowOffset: { width: 0, height: 4 },
+  },
+  logo: { width: 90, height: 90, borderRadius: 45, marginBottom: 16 },
+  title: { fontSize: 26, fontWeight: '800', marginBottom: 4, textAlign: 'center', color: '#1a365d' },
+  subtitle: { fontSize: 14, color: '#718096', marginBottom: 24 },
+
+  // Error Banner
+  errorBanner: { 
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff5f5', 
+    borderRadius: 10, padding: 12, marginBottom: 16, width: '100%',
+    borderLeftWidth: 4, borderLeftColor: '#e53e3e', gap: 10,
+  },
+  errorBannerText: { flex: 1, fontSize: 13, color: '#c53030', lineHeight: 18 },
+  errorClose: { padding: 2 },
+
+  // Field errors
+  fieldError: { color: '#e53e3e', fontSize: 12, alignSelf: 'flex-start', marginBottom: 8, marginTop: -4, marginLeft: 4 },
+
+  // Inputs
+  inputContainer: { 
+    flexDirection: 'row', alignItems: 'center', borderColor: '#e2e8f0', 
+    borderWidth: 1.5, borderRadius: 14, marginBottom: 10, width: '100%', 
+    paddingHorizontal: 12, backgroundColor: '#f7fafc',
+  },
+  inputError: { borderColor: '#e53e3e', backgroundColor: '#fff5f5' },
+  input: { flex: 1, height: 50, paddingLeft: 8, fontSize: 15, color: '#2d3748' },
+  passwordContainer: { 
+    flexDirection: 'row', alignItems: 'center', borderColor: '#e2e8f0', 
+    borderWidth: 1.5, borderRadius: 14, width: '100%', marginBottom: 10, 
+    paddingHorizontal: 12, backgroundColor: '#f7fafc',
+  },
+  passwordInput: { flex: 1, height: 50, paddingLeft: 8, fontSize: 15, color: '#2d3748' },
+  eyeIconContainer: { padding: 6 },
+  iconmail: { marginRight: 4 },
+  iconpass: { marginRight: 4 },
+
+  // Button
+  button: { 
+    backgroundColor: '#3182ce', borderRadius: 14, height: 52, 
+    justifyContent: 'center', alignItems: 'center', width: '100%', marginTop: 6,
+    elevation: 3, shadowColor: '#3182ce', shadowOpacity: 0.3, shadowRadius: 8,
+  },
+  buttonText: { color: '#ffffff', fontWeight: '700', fontSize: 17 },
+  
+  signUpContainer: { marginTop: 18, padding: 8 },
+  signUpText: { color: '#718096', fontSize: 14, textAlign: 'center' },
+  signUpHighlight: { color: '#3182ce', fontWeight: '700' },
 });
