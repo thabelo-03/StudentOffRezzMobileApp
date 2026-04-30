@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../services/api';
 import {
   generatePlatformOverviewPDF,
@@ -24,23 +23,22 @@ const REPORT_TYPES = [
 const AdminReportGenerator = () => {
   const [generating, setGenerating] = useState(null);
 
-  // Date filter state
+  // Date filter state - preset based (no native DateTimePicker)
   const [fromDate, setFromDate] = useState(() => {
     const d = new Date();
-    d.setMonth(d.getMonth() - 1); // Default: 1 month ago
+    d.setMonth(d.getMonth() - 1);
     return d;
   });
   const [toDate, setToDate] = useState(new Date());
-  const [showFromPicker, setShowFromPicker] = useState(false);
-  const [showToPicker, setShowToPicker] = useState(false);
+  const [activePeriod, setActivePeriod] = useState('This Month');
 
-  const filterByDate = (data, dateField = 'timestamp') => {
+  const filterByDate = (data, dateField) => {
     const from = new Date(fromDate); from.setHours(0, 0, 0, 0);
     const to = new Date(toDate); to.setHours(23, 59, 59, 999);
-    return data.filter(item => {
-      const itemDate = item[dateField] || item.timestamp || item.paymentDate || item.createdAt;
-      if (!itemDate) return true; // Include items without dates
-      const d = new Date(itemDate);
+    return data.filter(function(item) {
+      var itemDate = item[dateField] || item.timestamp || item.paymentDate || item.createdAt;
+      if (!itemDate) return true;
+      var d = new Date(itemDate);
       return d >= from && d <= to;
     });
   };
@@ -50,7 +48,7 @@ const AdminReportGenerator = () => {
   const handleGenerate = async (reportId) => {
     setGenerating(reportId);
     try {
-      const dateRange = `${dateLabel(fromDate)} — ${dateLabel(toDate)}`;
+      const dateRange = dateLabel(fromDate) + ' - ' + dateLabel(toDate);
 
       if (reportId === 'overview') {
         const [usersRes, housesRes] = await Promise.all([
@@ -75,7 +73,7 @@ const AdminReportGenerator = () => {
         await generateUsersCSV(res.data || []);
       } else if (reportId === 'issues') {
         const res = await api.get('/reports');
-        const filtered = filterByDate(res.data || []);
+        const filtered = filterByDate(res.data || [], 'timestamp');
         await generateIssuesPDF(filtered, dateRange);
       }
     } catch (error) {
@@ -91,24 +89,13 @@ const AdminReportGenerator = () => {
       <Text style={styles.title}>Generate Reports</Text>
       <Text style={styles.subtitle}>Select a date range and report type to export</Text>
 
-      {/* Date Range Filter */}
+      {/* Date Range Filter - Preset Buttons Only */}
       <View style={styles.dateSection}>
-        <Text style={styles.dateLabel}>Date Range</Text>
-        <View style={styles.dateRow}>
-          <TouchableOpacity style={styles.dateBtn} onPress={() => setShowFromPicker(true)}>
-            <Icon name="calendar-start" size={18} color="#007BFF" />
-            <Text style={styles.dateBtnText}>{dateLabel(fromDate)}</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.dateSeparator}>to</Text>
-
-          <TouchableOpacity style={styles.dateBtn} onPress={() => setShowToPicker(true)}>
-            <Icon name="calendar-end" size={18} color="#007BFF" />
-            <Text style={styles.dateBtnText}>{dateLabel(toDate)}</Text>
-          </TouchableOpacity>
+        <View style={styles.dateDisplayRow}>
+          <Icon name="calendar-range" size={18} color="#007BFF" />
+          <Text style={styles.dateDisplayText}>Period: {dateLabel(fromDate)} - {dateLabel(toDate)}</Text>
         </View>
 
-        {/* Quick date presets */}
         <View style={styles.presetRow}>
           {[
             { label: 'This Week', days: 7 },
@@ -118,42 +105,20 @@ const AdminReportGenerator = () => {
           ].map((preset) => (
             <TouchableOpacity
               key={preset.label}
-              style={styles.presetBtn}
+              style={[styles.presetBtn, activePeriod === preset.label && styles.presetBtnActive]}
               onPress={() => {
                 const d = new Date();
                 d.setDate(d.getDate() - preset.days);
                 setFromDate(d);
                 setToDate(new Date());
+                setActivePeriod(preset.label);
               }}
             >
-              <Text style={styles.presetText}>{preset.label}</Text>
+              <Text style={[styles.presetText, activePeriod === preset.label && styles.presetTextActive]}>{preset.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
-
-      {showFromPicker && (
-        <DateTimePicker
-          value={fromDate}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(event, date) => {
-            setShowFromPicker(false);
-            if (date) setFromDate(date);
-          }}
-        />
-      )}
-      {showToPicker && (
-        <DateTimePicker
-          value={toDate}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(event, date) => {
-            setShowToPicker(false);
-            if (date) setToDate(date);
-          }}
-        />
-      )}
 
       {/* Report Type Cards */}
       {REPORT_TYPES.map((report) => (
@@ -191,18 +156,13 @@ const styles = StyleSheet.create({
 
   // Date Filter
   dateSection: { backgroundColor: '#FFF', borderRadius: 12, padding: 16, marginBottom: 20, elevation: 2 },
-  dateLabel: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 10 },
-  dateRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  dateBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#F0F4FF', borderRadius: 10, padding: 12, gap: 8,
-    borderWidth: 1, borderColor: '#D0DCFF',
-  },
-  dateBtnText: { fontSize: 14, fontWeight: '500', color: '#007BFF' },
-  dateSeparator: { marginHorizontal: 10, color: '#999', fontSize: 14 },
-  presetRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, gap: 8 },
-  presetBtn: { flex: 1, backgroundColor: '#F5F5F5', paddingVertical: 8, borderRadius: 8, alignItems: 'center' },
-  presetText: { fontSize: 11, fontWeight: '600', color: '#555' },
+  dateDisplayRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  dateDisplayText: { fontSize: 14, color: '#555', fontWeight: '500' },
+  presetRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+  presetBtn: { flex: 1, backgroundColor: '#F5F5F5', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
+  presetBtnActive: { backgroundColor: '#007BFF' },
+  presetText: { fontSize: 12, fontWeight: '600', color: '#555' },
+  presetTextActive: { color: '#FFF' },
 
   // Report Cards
   card: {

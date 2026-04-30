@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, Alert, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, Alert, TextInput } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../database/firebaseConfig';
@@ -28,8 +27,7 @@ const LandlordDashboard = ({ navigation }) => {
     const d = new Date(); d.setMonth(d.getMonth() - 1); return d;
   });
   const [reportToDate, setReportToDate] = useState(new Date());
-  const [showFromPicker, setShowFromPicker] = useState(false);
-  const [showToPicker, setShowToPicker] = useState(false);
+  const [activePeriod, setActivePeriod] = useState('30 Days');
 
   const filterByDate = (data) => {
     const from = new Date(reportFromDate); from.setHours(0, 0, 0, 0);
@@ -285,39 +283,23 @@ const LandlordDashboard = ({ navigation }) => {
         {/* Download Reports Section */}
         <Text style={styles.sectionTitle}>Download Reports</Text>
 
-        {/* Date Filter */}
+        {/* Date Filter - Preset Buttons */}
         <View style={styles.dateFilterBox}>
           <View style={styles.dateFilterRow}>
-            <TouchableOpacity style={styles.dateFilterBtn} onPress={() => setShowFromPicker(true)}>
-              <Icon name="calendar-start" size={16} color="#007BFF" />
-              <Text style={styles.dateFilterText}>{dateLabel(reportFromDate)}</Text>
-            </TouchableOpacity>
-            <Text style={{ color: '#999', marginHorizontal: 8 }}>to</Text>
-            <TouchableOpacity style={styles.dateFilterBtn} onPress={() => setShowToPicker(true)}>
-              <Icon name="calendar-end" size={16} color="#007BFF" />
-              <Text style={styles.dateFilterText}>{dateLabel(reportToDate)}</Text>
-            </TouchableOpacity>
+            <Icon name="calendar-range" size={16} color="#007BFF" />
+            <Text style={styles.dateFilterLabel}>Period: {dateLabel(reportFromDate)} - {dateLabel(reportToDate)}</Text>
           </View>
           <View style={styles.presetRow}>
             {[{ label: '7 Days', days: 7 }, { label: '30 Days', days: 30 }, { label: '90 Days', days: 90 }, { label: 'All', days: 365*5 }].map(p => (
-              <TouchableOpacity key={p.label} style={styles.presetBtn} onPress={() => {
+              <TouchableOpacity key={p.label} style={[styles.presetBtn, activePeriod === p.label && styles.presetBtnActive]} onPress={() => {
                 const d = new Date(); d.setDate(d.getDate() - p.days);
-                setReportFromDate(d); setReportToDate(new Date());
+                setReportFromDate(d); setReportToDate(new Date()); setActivePeriod(p.label);
               }}>
-                <Text style={styles.presetText}>{p.label}</Text>
+                <Text style={[styles.presetText, activePeriod === p.label && styles.presetTextActive]}>{p.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
-
-        {showFromPicker && (
-          <DateTimePicker value={reportFromDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={(e, d) => { setShowFromPicker(false); if (d) setReportFromDate(d); }} />
-        )}
-        {showToPicker && (
-          <DateTimePicker value={reportToDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={(e, d) => { setShowToPicker(false); if (d) setReportToDate(d); }} />
-        )}
 
         <View style={styles.reportList}>
           {[
@@ -469,12 +451,13 @@ const styles = StyleSheet.create({
 
   // Date Filter
   dateFilterBox: { backgroundColor: '#FFF', borderRadius: 12, padding: 12, marginBottom: 12, elevation: 1 },
-  dateFilterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  dateFilterBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F0F4FF', borderRadius: 8, padding: 10, gap: 6, borderWidth: 1, borderColor: '#D0DCFF' },
-  dateFilterText: { fontSize: 13, fontWeight: '500', color: '#007BFF' },
-  presetRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, gap: 6 },
-  presetBtn: { flex: 1, backgroundColor: '#F5F5F5', paddingVertical: 7, borderRadius: 6, alignItems: 'center' },
+  dateFilterRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  dateFilterLabel: { fontSize: 13, color: '#555', fontWeight: '500' },
+  presetRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 6 },
+  presetBtn: { flex: 1, backgroundColor: '#F5F5F5', paddingVertical: 8, borderRadius: 6, alignItems: 'center' },
+  presetBtnActive: { backgroundColor: '#007BFF' },
   presetText: { fontSize: 11, fontWeight: '600', color: '#555' },
+  presetTextActive: { color: '#FFF' },
 });
 
 export default LandlordDashboard;
