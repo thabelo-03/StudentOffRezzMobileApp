@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Modal, Alert, TextInput, Platform, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { WebView } from 'react-native-webview';
 import api from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../database/firebaseConfig';
 import { signOut } from 'firebase/auth';
 import {
-  generatePropertiesPDF, generateBookingsPDF, generateRevenuePDF,
-  generatePropertiesCSV, generateBookingsCSV
+  buildPropertiesHTML, buildBookingsHTML, buildRevenueHTML,
+  generatePropertiesCSV, generateBookingsCSV, exportPDF, sharePDF
 } from '../services/reportService';
 
 const LandlordDashboard = ({ navigation }) => {
@@ -28,6 +30,13 @@ const LandlordDashboard = ({ navigation }) => {
   });
   const [reportToDate, setReportToDate] = useState(new Date());
   const [activePeriod, setActivePeriod] = useState('30 Days');
+  const [showFromPicker, setShowFromPicker] = useState(false);
+  const [showToPicker, setShowToPicker] = useState(false);
+
+  // Preview modal state
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewHTML, setPreviewHTML] = useState('');
+  const [previewFilename, setPreviewFilename] = useState('');
 
   const filterByDate = (data) => {
     const from = new Date(reportFromDate); from.setHours(0, 0, 0, 0);
@@ -283,11 +292,18 @@ const LandlordDashboard = ({ navigation }) => {
         {/* Download Reports Section */}
         <Text style={styles.sectionTitle}>Download Reports</Text>
 
-        {/* Date Filter - Preset Buttons */}
+        {/* Date Filter */}
         <View style={styles.dateFilterBox}>
           <View style={styles.dateFilterRow}>
-            <Icon name="calendar-range" size={16} color="#007BFF" />
-            <Text style={styles.dateFilterLabel}>Period: {dateLabel(reportFromDate)} - {dateLabel(reportToDate)}</Text>
+            <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowFromPicker(true)}>
+              <Icon name="calendar-start" size={16} color="#3182ce" />
+              <Text style={styles.datePickerText}>{dateLabel(reportFromDate)}</Text>
+            </TouchableOpacity>
+            <Text style={{ color: '#999', marginHorizontal: 6 }}>to</Text>
+            <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowToPicker(true)}>
+              <Icon name="calendar-end" size={16} color="#3182ce" />
+              <Text style={styles.datePickerText}>{dateLabel(reportToDate)}</Text>
+            </TouchableOpacity>
           </View>
           <View style={styles.presetRow}>
             {[{ label: '7 Days', days: 7 }, { label: '30 Days', days: 30 }, { label: '90 Days', days: 90 }, { label: 'All', days: 365*5 }].map(p => (
@@ -301,18 +317,27 @@ const LandlordDashboard = ({ navigation }) => {
           </View>
         </View>
 
+        {showFromPicker && (
+          <DateTimePicker value={reportFromDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={(e, d) => { setShowFromPicker(false); if (d) { setReportFromDate(d); setActivePeriod(''); } }} />
+        )}
+        {showToPicker && (
+          <DateTimePicker value={reportToDate} mode="date" display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={(e, d) => { setShowToPicker(false); if (d) { setReportToDate(d); setActivePeriod(''); } }} />
+        )}
+
         <View style={styles.reportList}>
           {[
-            { id: 'prop_pdf', title: 'My Properties', subtitle: 'All listings with details', icon: 'home-city', color: '#007BFF', format: 'PDF',
-              action: async () => { const r = await api.get('/listings/mine'); const dr = dateLabel(reportFromDate) + ' - ' + dateLabel(reportToDate); await generatePropertiesPDF(filterByDate(r.data || []), dr); } },
+            { id: 'prop_pdf', title: 'My Properties', subtitle: 'All listings with details', icon: 'home-city', color: '#3182ce', format: 'PDF',
+              action: async () => { const r = await api.get('/listings/mine'); const dr = dateLabel(reportFromDate) + ' - ' + dateLabel(reportToDate); const html = buildPropertiesHTML(filterByDate(r.data || []), dr); setPreviewHTML(html); setPreviewFilename('Properties_Report'); setPreviewVisible(true); } },
             { id: 'prop_csv', title: 'My Properties', subtitle: 'Export as spreadsheet', icon: 'file-excel', color: '#217346', format: 'Excel',
               action: async () => { const r = await api.get('/listings/mine'); await generatePropertiesCSV(filterByDate(r.data || [])); } },
-            { id: 'book_pdf', title: 'Booking Summary', subtitle: 'All bookings with status', icon: 'book-outline', color: '#FF9800', format: 'PDF',
-              action: async () => { const r = await api.get('/bookings/landlord'); const dr = dateLabel(reportFromDate) + ' - ' + dateLabel(reportToDate); await generateBookingsPDF(filterByDate(r.data || []), dr); } },
+            { id: 'book_pdf', title: 'Booking Summary', subtitle: 'All bookings with status', icon: 'book-outline', color: '#dd6b20', format: 'PDF',
+              action: async () => { const r = await api.get('/bookings/landlord'); const dr = dateLabel(reportFromDate) + ' - ' + dateLabel(reportToDate); const html = buildBookingsHTML(filterByDate(r.data || []), dr); setPreviewHTML(html); setPreviewFilename('Booking_Summary'); setPreviewVisible(true); } },
             { id: 'book_csv', title: 'Booking Summary', subtitle: 'Export as spreadsheet', icon: 'file-excel', color: '#217346', format: 'Excel',
               action: async () => { const r = await api.get('/bookings/landlord'); await generateBookingsCSV(filterByDate(r.data || [])); } },
-            { id: 'rev_pdf', title: 'Revenue Report', subtitle: 'Paid transactions & totals', icon: 'cash-multiple', color: '#4CAF50', format: 'PDF',
-              action: async () => { const r = await api.get('/bookings/landlord'); const dr = dateLabel(reportFromDate) + ' - ' + dateLabel(reportToDate); await generateRevenuePDF(filterByDate(r.data || []), dr); } },
+            { id: 'rev_pdf', title: 'Revenue Report', subtitle: 'Paid transactions & totals', icon: 'cash-multiple', color: '#38a169', format: 'PDF',
+              action: async () => { const r = await api.get('/bookings/landlord'); const dr = dateLabel(reportFromDate) + ' - ' + dateLabel(reportToDate); const html = buildRevenueHTML(filterByDate(r.data || []), dr); setPreviewHTML(html); setPreviewFilename('Revenue_Report'); setPreviewVisible(true); } },
           ].map((report) => (
             <TouchableOpacity
               key={report.id}
@@ -342,6 +367,35 @@ const LandlordDashboard = ({ navigation }) => {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* Preview Modal */}
+        <Modal visible={previewVisible} animationType="slide" onRequestClose={() => setPreviewVisible(false)}>
+          <View style={styles.previewContainer}>
+            <View style={styles.previewHeader}>
+              <TouchableOpacity onPress={() => setPreviewVisible(false)}>
+                <Icon name="close" size={24} color="#333" />
+              </TouchableOpacity>
+              <Text style={styles.previewTitle}>Report Preview</Text>
+              <View style={{ width: 24 }} />
+            </View>
+            <WebView
+              originWhitelist={['*']}
+              source={{ html: previewHTML }}
+              style={{ flex: 1 }}
+              scalesPageToFit={true}
+            />
+            <View style={styles.previewActions}>
+              <TouchableOpacity style={styles.previewBtnPrint} onPress={async () => { setPreviewVisible(false); await exportPDF(previewHTML, previewFilename); }}>
+                <Icon name="printer" size={18} color="#FFF" />
+                <Text style={styles.previewBtnText}>Print / Save PDF</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.previewBtnShare} onPress={async () => { setPreviewVisible(false); await sharePDF(previewHTML, previewFilename); }}>
+                <Icon name="share-variant" size={18} color="#FFF" />
+                <Text style={styles.previewBtnText}>Share</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
         
       </ScrollView>
     </View>
@@ -451,13 +505,23 @@ const styles = StyleSheet.create({
 
   // Date Filter
   dateFilterBox: { backgroundColor: '#FFF', borderRadius: 12, padding: 12, marginBottom: 12, elevation: 1 },
-  dateFilterRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  dateFilterLabel: { fontSize: 13, color: '#555', fontWeight: '500' },
+  dateFilterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  datePickerBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ebf4ff', borderRadius: 8, padding: 10, gap: 6, borderWidth: 1, borderColor: '#bee3f8' },
+  datePickerText: { fontSize: 13, fontWeight: '500', color: '#3182ce' },
   presetRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 6 },
   presetBtn: { flex: 1, backgroundColor: '#F5F5F5', paddingVertical: 8, borderRadius: 6, alignItems: 'center' },
-  presetBtnActive: { backgroundColor: '#007BFF' },
+  presetBtnActive: { backgroundColor: '#3182ce' },
   presetText: { fontSize: 11, fontWeight: '600', color: '#555' },
   presetTextActive: { color: '#FFF' },
+
+  // Preview Modal
+  previewContainer: { flex: 1, backgroundColor: '#F4F6F8' },
+  previewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 50, backgroundColor: '#FFF', elevation: 2 },
+  previewTitle: { fontSize: 18, fontWeight: '700', color: '#333' },
+  previewActions: { flexDirection: 'row', padding: 12, gap: 10, backgroundColor: '#FFF', elevation: 4 },
+  previewBtnPrint: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#3182ce', padding: 14, borderRadius: 10, gap: 8 },
+  previewBtnShare: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#38a169', padding: 14, borderRadius: 10, gap: 8 },
+  previewBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
 });
 
 export default LandlordDashboard;
