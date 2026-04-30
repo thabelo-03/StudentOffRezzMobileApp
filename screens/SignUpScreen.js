@@ -1,20 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import {
-  View,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  Text,
-  Alert,
-  Modal,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
-  ActivityIndicator,
+  View, TextInput, StyleSheet, TouchableOpacity, Text, Modal,
+  KeyboardAvoidingView, ScrollView, Platform, ActivityIndicator, Animated, Keyboard,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import RNPickerSelect from 'react-native-picker-select';
-import { useFocusEffect } from '@react-navigation/native';
 import api from '../services/api';
 
 const SignUpScreen = ({ navigation }) => {
@@ -31,268 +22,291 @@ const SignUpScreen = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Clear inputs when screen is focused (refreshed)
-  useFocusEffect(
-    useCallback(() => {
-      const resetForm = () => {
-        setUsername('');
-        setEmail('');
-        setPhone('');
-        setPassword('');
-        setConfPass('');
-        setRole('');
-        setStudentRegNo('');
-        setIsAgreed(false);
-        setPasswordVisible(false);
-        setConfirmPasswordVisible(false);
-        setModalVisible(false);
-        setIsLoading(false);
-      };
+  // Error state
+  const [errorMsg, setErrorMsg] = useState('');
+  const [errorType, setErrorType] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
 
-      resetForm();
+  // Animation
+  const shakeAnim = useRef(new Animated.Value(0)).current;
 
-      return () => resetForm();
-    }, [])
-  );
+  const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
-  const validatePassword = (password) => {
-    const minLength = 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-    const hasSpecialChar = /[^A-Za-z0-9]/.test(password); // Checks for any non-alphanumeric char
+  const triggerShake = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -8, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start();
+  };
 
-    let errors = [];
-    if (password.length < minLength) errors.push('at least 8 characters');
-    if (!hasUpperCase) errors.push('an uppercase letter');
-    if (!hasLowerCase) errors.push('a lowercase letter');
-    if (!hasNumbers) errors.push('a number');
-    if (!hasSpecialChar) errors.push('a special character');
-    
-    if (errors.length > 0) {
-      return 'Password must contain ' + errors.join(', ') + '.';
+  const clearErrors = () => { setErrorMsg(''); setErrorType(''); setFieldErrors({}); };
+
+  const showError = (msg, type, fields = {}) => {
+    setErrorMsg(msg); setErrorType(type); setFieldErrors(fields);
+    triggerShake();
+  };
+
+  const clearField = (field) => {
+    if (fieldErrors[field]) {
+      const f = { ...fieldErrors }; delete f[field]; setFieldErrors(f);
     }
+    if (errorMsg) clearErrors();
+  };
 
-    return null;
+  const validatePassword = (pw) => {
+    let errors = [];
+    if (pw.length < 8) errors.push('at least 8 characters');
+    if (!/[A-Z]/.test(pw)) errors.push('an uppercase letter');
+    if (!/[a-z]/.test(pw)) errors.push('a lowercase letter');
+    if (!/\d/.test(pw)) errors.push('a number');
+    if (!/[^A-Za-z0-9]/.test(pw)) errors.push('a special character');
+    return errors.length > 0 ? 'Password must contain ' + errors.join(', ') + '.' : null;
+  };
+
+  const getPasswordStrength = () => {
+    if (!password) return null;
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+    if (score <= 2) return { label: 'Weak', color: '#e53e3e', width: '33%' };
+    if (score <= 4) return { label: 'Medium', color: '#dd6b20', width: '66%' };
+    return { label: 'Strong', color: '#38a169', width: '100%' };
   };
 
   const handleSignup = async () => {
-    if (!isAgreed) {
-      Alert.alert('Please agree to the terms and conditions.');
-      return;
-    }
+    Keyboard.dismiss();
+    clearErrors();
 
-    if (password !== confpassword) {
-      Alert.alert('Passwords do not match.');
-      return;
-    }
+    const t = { username: username.trim(), email: email.trim(), phone: phone.trim(), password: password.trim(), confpassword: confpassword.trim() };
+    const fe = {};
 
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      Alert.alert('Weak Password', passwordError);
-      return;
+    // Validate all fields
+    if (!t.username) fe.username = 'Username is required';
+    if (!t.email) fe.email = 'Email is required';
+    else if (!isValidEmail(t.email)) fe.email = 'Invalid email format (e.g. user@example.com)';
+    if (!t.phone) fe.phone = 'Phone number is required';
+    else if (t.phone.length < 10) fe.phone = 'Phone number must be at least 10 digits';
+    if (!t.password) fe.password = 'Password is required';
+    else {
+      const pwErr = validatePassword(t.password);
+      if (pwErr) fe.password = pwErr;
     }
+    if (!t.confpassword) fe.confpassword = 'Please confirm your password';
+    else if (t.password !== t.confpassword) fe.confpassword = 'Passwords do not match';
+    if (!role) fe.role = 'Please select a role';
+    if (role === 'student' && !studentRegNo.trim()) fe.studentRegNo = 'Student Reg No is required';
+    if (!isAgreed) fe.terms = 'You must agree to the Terms and Conditions';
 
-    if (!role) {
-      Alert.alert('Please select a role.');
-      return;
-    }
-
-    if (role === 'student' && !studentRegNo) {
-      Alert.alert('Missing Information', 'Please enter your Student Reg No.');
+    if (Object.keys(fe).length > 0) {
+      const count = Object.keys(fe).length;
+      const msg = count === 1
+        ? Object.values(fe)[0]
+        : 'Please fix the ' + count + ' issues highlighted below.';
+      showError(msg, 'validation', fe);
       return;
     }
 
     try {
       setIsLoading(true);
-
       const response = await api.post('/auth/register', {
-        username,
-        email,
-        phone,
-        password,
-        role,
-        studentRegNo: role === 'student' ? studentRegNo : undefined,
+        username: t.username, email: t.email, phone: t.phone, password: t.password,
+        role, studentRegNo: role === 'student' ? studentRegNo.trim() : undefined,
       });
-
       console.log('User registered successfully:', response.data);
       setModalVisible(true);
     } catch (error) {
       console.error("Error during sign up:", error);
-      let message = 'Sign Up Failed. Please try again.';
       if (error.response) {
-        message = error.response.data.message || message;
+        const status = error.response.status;
+        const msg = error.response.data?.message || '';
+        if (status === 409 || msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('already registered')) {
+          showError('An account with this email already exists. Please sign in instead.', 'auth', { email: 'Email already in use' });
+        } else if (status >= 500) {
+          showError('Server is currently unavailable. Please try again later.', 'network');
+        } else {
+          showError(msg || 'Registration failed. Please try again.', 'general');
+        }
+      } else if (error.request) {
+        showError('Unable to reach the server. Please check your internet connection.', 'network');
+      } else {
+        showError('An unexpected error occurred. Please try again.', 'general');
       }
-      Alert.alert('Sign Up Failed', message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const closeModal = () => {
-    setModalVisible(false);
-    navigation.navigate('Login');
+  const closeModal = () => { setModalVisible(false); navigation.navigate('Login'); };
+
+  const getErrorIcon = () => {
+    switch (errorType) {
+      case 'network': return 'wifi-off';
+      case 'auth': return 'shield-alert-outline';
+      case 'validation': return 'alert-circle-outline';
+      default: return 'alert-circle-outline';
+    }
   };
 
+  const strength = getPasswordStrength();
+  const hasFieldError = (f) => !!fieldErrors[f];
+
+  const renderInput = (field, iconName, placeholder, value, onChangeText, extra = {}) => (
+    <>
+      <View style={[styles.inputContainer, hasFieldError(field) && styles.inputError]}>
+        <Icon name={iconName} size={18} color={hasFieldError(field) ? '#e53e3e' : '#3182ce'} style={styles.icon} />
+        <TextInput
+          placeholder={placeholder}
+          placeholderTextColor="#a0aec0"
+          value={value}
+          onChangeText={(t) => { onChangeText(t); clearField(field); }}
+          style={styles.input}
+          {...extra}
+        />
+        {extra.secureTextEntry !== undefined && (
+          <TouchableOpacity onPress={extra.onToggle} style={styles.eyeIconContainer}>
+            <Icon name={extra.visible ? 'eye' : 'eye-slash'} size={18} color="#3182ce" />
+          </TouchableOpacity>
+        )}
+        {hasFieldError(field) && <MCIcon name="alert-circle" size={18} color="#e53e3e" />}
+      </View>
+      {hasFieldError(field) && <Text style={styles.fieldError}>{fieldErrors[field]}</Text>}
+    </>
+  );
+
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={80}
-    >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        <View style={styles.container}>
-          <View style={styles.card}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#f0f2f5' }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={80}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 16 }} keyboardShouldPersistTaps="handled">
+        <Animated.View style={[styles.card, { transform: [{ translateX: shakeAnim }] }]}>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Sign up to get started</Text>
 
-            <View style={styles.inputContainer}>
-              <Icon name="user" size={20} color="#000" style={styles.icon} />
-              <TextInput
-                placeholder="Username"
-                value={username}
-                onChangeText={setUsername}
-                style={styles.input}
-                autoComplete="off"
-                textContentType="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Icon name="envelope" size={20} color="#000" style={styles.icon} />
-              <TextInput
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                style={styles.input}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="off"
-                textContentType="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Icon name="phone" size={20} color="#000" style={styles.icon} />
-              <TextInput
-                placeholder="Phone"
-                value={phone}
-                onChangeText={setPhone}
-                style={styles.input}
-                keyboardType="phone-pad"
-                autoComplete="off"
-                textContentType="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Icon name="lock" size={20} color="#000" style={styles.icon} />
-              <TextInput
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!passwordVisible}
-                style={styles.input}
-                autoComplete="off"
-                textContentType="none"
-                autoCorrect={false}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} style={styles.eyeIconContainer}>
-                <Icon name={passwordVisible ? 'eye' : 'eye-slash'} size={20} color="#007BFF" />
+          {/* Error Banner */}
+          {errorMsg !== '' && (
+            <View style={styles.errorBanner}>
+              <MCIcon name={getErrorIcon()} size={20} color={errorType === 'network' ? '#dd6b20' : '#e53e3e'} />
+              <Text style={styles.errorBannerText}>{errorMsg}</Text>
+              <TouchableOpacity onPress={clearErrors} style={{ padding: 2 }}>
+                <MCIcon name="close" size={16} color="#999" />
               </TouchableOpacity>
             </View>
+          )}
 
-            <View style={styles.inputContainer}>
-              <Icon name="lock" size={20} color="#000" style={styles.icon} />
-              <TextInput
-                placeholder="Confirm Password"
-                value={confpassword}
-                onChangeText={setConfPass}
-                secureTextEntry={!confirmPasswordVisible}
-                style={styles.input}
-                autoComplete="off"
-                textContentType="none"
-                autoCorrect={false}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)} style={styles.eyeIconContainer}>
-                <Icon name={confirmPasswordVisible ? 'eye' : 'eye-slash'} size={20} color="#007BFF" />
-              </TouchableOpacity>
-            </View>
+          {/* Username */}
+          {renderInput('username', 'user', 'Username', username, setUsername, { autoComplete: 'off', autoCorrect: false })}
 
-            <View style={styles.inputContainer}>
-              <Icon name="user-circle" size={20} color="blue" style={styles.icon} />
-              <Text style={styles.roleText}>Select Your Role</Text>
-              <RNPickerSelect
-                placeholder={{ label: 'Select your role...', value: '' }}
-                items={[
-                  { label: 'Landlord', value: 'landlord' },
-                  { label: 'Student', value: 'student' },
-                ]}
-                onValueChange={value => setRole(value)}
-                value={role}
-                style={pickerSelectStyles}
-              />
-            </View>
+          {/* Email */}
+          {renderInput('email', 'envelope', 'Email', email, setEmail, { keyboardType: 'email-address', autoCapitalize: 'none', autoComplete: 'off' })}
 
-            {role === 'student' && (
-              <>
-                <View style={styles.inputContainer}>
-                  <Icon name="id-card" size={20} color="#000" style={styles.icon} />
-                  <TextInput
-                    placeholder="Student Reg No (e.g. N0123456X)"
-                    value={studentRegNo}
-                    onChangeText={setStudentRegNo}
-                    style={styles.input}
-                    autoCapitalize="characters"
-                  />
-                </View>
-              </>
-            )}
+          {/* Phone */}
+          {renderInput('phone', 'phone', 'Phone Number', phone, setPhone, { keyboardType: 'phone-pad', autoComplete: 'off' })}
 
-            <View style={styles.checkboxContainer}>
-              <TouchableOpacity
-                style={styles.checkbox}
-                onPress={() => setIsAgreed(!isAgreed)}
-              >
-                <Icon name={isAgreed ? "check-square" : "square-o"} size={20} color="#000" />
-              </TouchableOpacity>
-              <Text style={styles.checkboxText}>
-                I have read and understood the terms and conditions.
-              </Text>
-            </View>
-
-            <TouchableOpacity onPress={() => navigation.navigate('TermsAndConditions')}>
-              <Text style={styles.link}>Terms and Conditions</Text>
+          {/* Password */}
+          <View style={[styles.inputContainer, hasFieldError('password') && styles.inputError]}>
+            <Icon name="lock" size={18} color={hasFieldError('password') ? '#e53e3e' : '#3182ce'} style={styles.icon} />
+            <TextInput
+              placeholder="Password"
+              placeholderTextColor="#a0aec0"
+              value={password}
+              onChangeText={(t) => { setPassword(t); clearField('password'); }}
+              secureTextEntry={!passwordVisible}
+              style={styles.input}
+              autoCapitalize="none"
+            />
+            <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} style={styles.eyeIconContainer}>
+              <Icon name={passwordVisible ? 'eye' : 'eye-slash'} size={18} color="#3182ce" />
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, isLoading && styles.buttonDisabled]}
-              onPress={handleSignup}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Sign Up</Text>
-              )}
-            </TouchableOpacity>
+            {hasFieldError('password') && <MCIcon name="alert-circle" size={18} color="#e53e3e" />}
           </View>
-        </View>
+          {hasFieldError('password') && <Text style={styles.fieldError}>{fieldErrors.password}</Text>}
+
+          {/* Password Strength Bar */}
+          {password.length > 0 && strength && (
+            <View style={styles.strengthRow}>
+              <View style={styles.strengthBarBg}>
+                <View style={[styles.strengthBarFill, { width: strength.width, backgroundColor: strength.color }]} />
+              </View>
+              <Text style={[styles.strengthLabel, { color: strength.color }]}>{strength.label}</Text>
+            </View>
+          )}
+
+          {/* Confirm Password */}
+          <View style={[styles.inputContainer, hasFieldError('confpassword') && styles.inputError]}>
+            <Icon name="lock" size={18} color={hasFieldError('confpassword') ? '#e53e3e' : '#3182ce'} style={styles.icon} />
+            <TextInput
+              placeholder="Confirm Password"
+              placeholderTextColor="#a0aec0"
+              value={confpassword}
+              onChangeText={(t) => { setConfPass(t); clearField('confpassword'); }}
+              secureTextEntry={!confirmPasswordVisible}
+              style={styles.input}
+              autoCapitalize="none"
+            />
+            <TouchableOpacity onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)} style={styles.eyeIconContainer}>
+              <Icon name={confirmPasswordVisible ? 'eye' : 'eye-slash'} size={18} color="#3182ce" />
+            </TouchableOpacity>
+            {hasFieldError('confpassword') && <MCIcon name="alert-circle" size={18} color="#e53e3e" />}
+          </View>
+          {hasFieldError('confpassword') && <Text style={styles.fieldError}>{fieldErrors.confpassword}</Text>}
+
+          {/* Role Picker */}
+          <View style={[styles.inputContainer, hasFieldError('role') && styles.inputError]}>
+            <MCIcon name="account-circle-outline" size={20} color={hasFieldError('role') ? '#e53e3e' : '#3182ce'} style={styles.icon} />
+            <Text style={styles.roleText}>Role</Text>
+            <RNPickerSelect
+              placeholder={{ label: 'Select your role...', value: '' }}
+              items={[
+                { label: 'Landlord', value: 'landlord' },
+                { label: 'Student', value: 'student' },
+              ]}
+              onValueChange={value => { setRole(value); clearField('role'); }}
+              value={role}
+              style={pickerSelectStyles}
+            />
+            {hasFieldError('role') && <MCIcon name="alert-circle" size={18} color="#e53e3e" />}
+          </View>
+          {hasFieldError('role') && <Text style={styles.fieldError}>{fieldErrors.role}</Text>}
+
+          {/* Student Reg No */}
+          {role === 'student' && (
+            <>
+              {renderInput('studentRegNo', 'id-card', 'Student Reg No (e.g. N0123456X)', studentRegNo, setStudentRegNo, { autoCapitalize: 'characters' })}
+            </>
+          )}
+
+          {/* Terms Checkbox */}
+          <View style={[styles.checkboxContainer, hasFieldError('terms') && { borderColor: '#e53e3e', borderWidth: 1, borderRadius: 8, padding: 8, backgroundColor: '#fff5f5' }]}>
+            <TouchableOpacity style={styles.checkbox} onPress={() => { setIsAgreed(!isAgreed); clearField('terms'); }}>
+              <MCIcon name={isAgreed ? "checkbox-marked" : "checkbox-blank-outline"} size={22} color={isAgreed ? '#3182ce' : (hasFieldError('terms') ? '#e53e3e' : '#a0aec0')} />
+            </TouchableOpacity>
+            <Text style={styles.checkboxText}>I have read and understood the{' '}
+              <Text style={styles.link} onPress={() => navigation.navigate('TermsAndConditions')}>Terms and Conditions</Text>
+            </Text>
+          </View>
+          {hasFieldError('terms') && <Text style={styles.fieldError}>{fieldErrors.terms}</Text>}
+
+          {/* Sign Up Button */}
+          <TouchableOpacity style={[styles.button, isLoading && styles.buttonDisabled]} onPress={handleSignup} disabled={isLoading} activeOpacity={0.8}>
+            {isLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.buttonText}>Create Account</Text>}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.loginText}>Already have an account? <Text style={styles.loginHighlight}>Sign In</Text></Text>
+          </TouchableOpacity>
+        </Animated.View>
 
         {/* Success Modal */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={closeModal}
-        >
+        <Modal animationType="fade" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
           <View style={styles.modalContainer}>
             <View style={styles.modalView}>
-              <Text style={styles.modalText}>Welcome To ThabStay, {username}!</Text>
-              <Text style={styles.modalText}>You have successfully registered.</Text>
+              <MCIcon name="check-circle" size={60} color="#38a169" style={{ marginBottom: 16 }} />
+              <Text style={styles.modalTitle}>Welcome to ThabStay!</Text>
+              <Text style={styles.modalSub}>{username}, your account has been created successfully.</Text>
               <TouchableOpacity style={styles.modalButton} onPress={closeModal}>
                 <Text style={styles.modalButtonText}>Continue to Login</Text>
               </TouchableOpacity>
@@ -305,134 +319,74 @@ const SignUpScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 16 },
   card: {
-    padding: 20,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    padding: 24, borderRadius: 22, backgroundColor: '#fff', elevation: 6,
+    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 15, shadowOffset: { width: 0, height: 4 },
   },
+  title: { fontSize: 26, fontWeight: '800', color: '#1a365d', textAlign: 'center', marginBottom: 4 },
+  subtitle: { fontSize: 14, color: '#718096', textAlign: 'center', marginBottom: 22 },
+
+  // Error Banner
+  errorBanner: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff5f5',
+    borderRadius: 10, padding: 12, marginBottom: 14, borderLeftWidth: 4, borderLeftColor: '#e53e3e', gap: 10,
+  },
+  errorBannerText: { flex: 1, fontSize: 13, color: '#c53030', lineHeight: 18 },
+  fieldError: { color: '#e53e3e', fontSize: 12, marginBottom: 8, marginTop: -6, marginLeft: 4 },
+
+  // Inputs
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#007BFF',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 20,
-    width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: '#e2e8f0',
+    borderRadius: 14, paddingHorizontal: 12, marginBottom: 10, backgroundColor: '#f7fafc',
   },
-  input: {
-    flex: 1,
-    height: 40,
-    marginLeft: 10,
-  },
-  icon: {
-    marginRight: 10,
-  },
-  eyeIconContainer: {
-    padding: 5,
-  },
-  roleText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginRight: 10,
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  checkbox: {
-    marginRight: 10,
-  },
-  checkboxText: {
-    flex: 1,
-  },
-  link: {
-    color: '#007BFF',
-    textDecorationLine: 'underline',
-    marginBottom: 12,
-  },
+  inputError: { borderColor: '#e53e3e', backgroundColor: '#fff5f5' },
+  input: { flex: 1, height: 48, marginLeft: 8, fontSize: 15, color: '#2d3748' },
+  icon: { marginRight: 2 },
+  eyeIconContainer: { padding: 6 },
+  roleText: { fontSize: 14, fontWeight: '600', color: '#4a5568', marginRight: 8 },
+
+  // Password Strength
+  strengthRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: -4, paddingHorizontal: 4, gap: 8 },
+  strengthBarBg: { flex: 1, height: 4, backgroundColor: '#e2e8f0', borderRadius: 2, overflow: 'hidden' },
+  strengthBarFill: { height: '100%', borderRadius: 2 },
+  strengthLabel: { fontSize: 11, fontWeight: '700' },
+
+  // Checkbox
+  checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 4 },
+  checkbox: { marginRight: 8 },
+  checkboxText: { flex: 1, fontSize: 13, color: '#4a5568', lineHeight: 18 },
+  link: { color: '#3182ce', fontWeight: '600', textDecorationLine: 'underline' },
+
+  // Button
   button: {
-    backgroundColor: '#007BFF',
-    borderRadius: 10,
-    padding: 10,
-    alignItems: 'center',
+    backgroundColor: '#3182ce', borderRadius: 14, height: 52, justifyContent: 'center', alignItems: 'center',
+    marginTop: 6, elevation: 3, shadowColor: '#3182ce', shadowOpacity: 0.3, shadowRadius: 8,
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#ffffff',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
+  buttonDisabled: { opacity: 0.6 },
+  buttonText: { color: '#ffffff', fontWeight: '700', fontSize: 17 },
+
+  loginLink: { marginTop: 18, alignItems: 'center', padding: 8 },
+  loginText: { color: '#718096', fontSize: 14 },
+  loginHighlight: { color: '#3182ce', fontWeight: '700' },
+
+  // Success Modal
+  modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
   modalView: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    width: '85%', backgroundColor: '#fff', borderRadius: 22, padding: 30, alignItems: 'center',
+    elevation: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 15,
   },
-  modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
-    fontSize: 18,
-  },
+  modalTitle: { fontSize: 22, fontWeight: '800', color: '#1a365d', marginBottom: 8 },
+  modalSub: { fontSize: 14, color: '#718096', textAlign: 'center', marginBottom: 20, lineHeight: 20 },
   modalButton: {
-    backgroundColor: '#007BFF',
-    borderRadius: 10,
-    padding: 10,
-    alignItems: 'center',
+    backgroundColor: '#3182ce', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 40, alignItems: 'center',
   },
-  modalButtonText: {
-    color: '#fff',
-  },
+  modalButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });
 
 const pickerSelectStyles = StyleSheet.create({
-  inputIOS: {
-    fontSize: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: '#007BFF',
-    borderRadius: 5,
-    color: 'black',
-    paddingRight: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-  },
-  inputAndroid: {
-    fontSize: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: '#007BFF',
-    borderRadius: 5,
-    color: 'black',
-    paddingRight: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-  },
-  iconContainer: {
-    top: 10,
-    right: 12,
-  },
+  inputIOS: { fontSize: 15, paddingVertical: 10, paddingHorizontal: 8, color: '#2d3748', paddingRight: 30 },
+  inputAndroid: { fontSize: 15, paddingVertical: 6, paddingHorizontal: 8, color: '#2d3748', paddingRight: 30 },
+  iconContainer: { top: 10, right: 12 },
 });
 
 export default SignUpScreen;
