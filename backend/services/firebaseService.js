@@ -67,7 +67,7 @@ const firebaseGetAllReports = async () => {
 // --- SYSTEM CONFIG OPERATIONS ---
 const firebaseGetSystemConfig = async () => {
   const snapshot = await db.ref('system_config').once('value');
-  return snapshot.val() || { maintenanceMode: false, supportEmail: 'support@thabstay.com' };
+  return snapshot.val() || { maintenanceMode: false, supportEmail: 'support@studenthousingconnect.com' };
 };
 
 const firebaseUpdateSystemConfig = async (updates) => {

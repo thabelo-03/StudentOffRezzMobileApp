@@ -184,7 +184,7 @@ const LandlordDashboard = ({ navigation }) => {
               <Icon name="cog-outline" size={20} color="#333" />
               <Text style={styles.menuText}>Settings</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); Alert.alert("Help", "Contact support@thabstay.com"); }}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); Alert.alert("Help", "Contact support@studenthousingconnect.com"); }}>
               <Icon name="help-circle-outline" size={20} color="#333" />
               <Text style={styles.menuText}>Help</Text>
             </TouchableOpacity>

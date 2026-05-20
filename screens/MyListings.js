@@ -112,7 +112,7 @@ const MyListings = () => {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: 'Images',
-        quality: 0.1,
+        quality: 0.5,
         allowsMultipleSelection: true,
       });
 
@@ -151,12 +151,12 @@ const MyListings = () => {
           continue;
         }
 
-        // Compress local images aggressively
+        // Compress local images with balanced quality
         console.log(`Compressing image: ${uri.substring(uri.length - 30)}`);
         const manipulated = await ImageManipulator.manipulateAsync(
           sourceUri,
-          [{ resize: { width: 150 } }],
-          { compress: 0.1, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+          [{ resize: { width: 600 } }],
+          { compress: 0.4, format: ImageManipulator.SaveFormat.JPEG, base64: true }
         );
         
         if (manipulated.base64) {
@@ -174,7 +174,7 @@ const MyListings = () => {
         // Last resort: try reading original at lowest quality
         try {
           const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-          if (base64.length < 50000) { // Only include if under ~50KB
+          if (base64.length < 200000) { // Only include if under ~200KB
             processedUrls.push(`data:image/jpeg;base64,${base64}`);
             console.log(`⚠️ Used uncompressed (${(base64.length / 1024).toFixed(1)} KB)`);
           } else {

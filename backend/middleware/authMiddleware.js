@@ -15,7 +15,7 @@ module.exports = async function (req, res, next) {
     // 1. Attach the core data from the Firebase Token
     req.user = {
       uid: decodedToken.uid,
-      email: decodedToken.email, // THIS IS CRITICAL for filtering Bongi's houses
+      email: decodedToken.email,
     };
 
     // 2. Fetch the role from Realtime DB (users node)

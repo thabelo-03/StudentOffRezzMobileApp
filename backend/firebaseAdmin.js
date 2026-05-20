@@ -29,7 +29,7 @@ if (process.env.FIREBASE_CREDENTIALS) {
 if (serviceAccount) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    // Updated with your ThabStay RTDB URL:
+    // Updated with your Student Housing Connect RTDB URL:
     databaseURL: "https://mlalazi011-default-rtdb.firebaseio.com/"
   });
 }
