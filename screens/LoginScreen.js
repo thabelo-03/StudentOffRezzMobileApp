@@ -7,13 +7,11 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
-import { auth } from '../database/firebaseConfig'; // Import Firebase auth client SDK
-import { signInWithEmailAndPassword } from 'firebase/auth'; // Import Firebase login function
 
 export default function LoginScreen() {
   const navigation = useNavigation();
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [assets, error] = useAssets([require('../assets/logo.png')]);
+  const [assets, error] = useAssets([require('../assets/ThabStayLogo.jpeg')]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -107,11 +105,7 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      // 5. Authenticate with Firebase client-side
-      const userCredential = await signInWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
-      const firebaseUser = userCredential.user;
-
-      // 6. Make API call to our backend to get custom token and user details (with role)
+      // 5. Authenticate against the backend (returns a JWT + user details with role)
       const response = await api.post('/auth/login', {
         email: trimmedEmail,
         password: trimmedPassword,
@@ -119,24 +113,26 @@ export default function LoginScreen() {
 
       const { token, user } = response.data;
 
-      // 7. Store the custom token and user data for session management
+      // 6. Store the JWT and user data for session management
       await AsyncStorage.setItem('token', token);
       await AsyncStorage.setItem('user', JSON.stringify(user));
 
       setLoading(false);
 
       // 8. Role-Based Navigation Logic
+      // NOTE: the web backend exposes a single `isVerified` flag on the user.
+      // (Richer per-role verification lives on the Student/Landlord profile models;
+      // wire that up when the verification screens are ported — see docs/PORTING.md.)
       if (user.role === 'admin') {
         navigation.navigate('AdminDashboard');
       } else if (user.role === 'landlord') {
-        // Check verification status before allowing access to dashboard
-        if (user.verificationStatus !== 'verified') {
+        if (!user.isVerified) {
           navigation.navigate('LandlordVerification', { user });
         } else {
-          navigation.navigate('Landlord'); 
+          navigation.navigate('Landlord');
         }
       } else if (user.role === 'student') {
-        if (!user.studentVerified) {
+        if (!user.isVerified) {
           navigation.navigate('StudentVerification', { user });
         } else {
           navigation.navigate('Student');
@@ -149,43 +145,11 @@ export default function LoginScreen() {
       setLoading(false);
       console.error('Login Error:', err);
 
-      // Firebase Auth Errors
-      if (err.code && err.code.startsWith('auth/')) {
-        switch (err.code) {
-          case 'auth/user-not-found':
-            showError('No account found with this email. Please check your email or sign up.', 'email', {
-              email: 'Account not found'
-            });
-            break;
-          case 'auth/wrong-password':
-            showError('Incorrect password. Please try again or reset your password.', 'password', {
-              password: 'Incorrect password'
-            });
-            break;
-          case 'auth/invalid-credential':
-            showError('Invalid email or password. Please double-check your credentials.', 'auth');
-            break;
-          case 'auth/invalid-email':
-            showError('The email address format is invalid. Please enter a valid email.', 'email', {
-              email: 'Invalid email format'
-            });
-            break;
-          case 'auth/user-disabled':
-            showError('This account has been disabled. Please contact support for assistance.', 'auth');
-            break;
-          case 'auth/too-many-requests':
-            showError('Too many failed login attempts. Please wait a few minutes and try again.', 'auth');
-            break;
-          case 'auth/network-request-failed':
-            showError('Network error. Please check your internet connection and try again.', 'network');
-            break;
-          default:
-            showError('Authentication failed. Please check your credentials and try again.', 'auth');
-        }
-      } else if (err.response) {
-        // Backend API errors
+      if (err.response) {
+        // Backend API errors. The backend returns errors as { error: '...' }
+        // (with { message } on some routes), so fall back across both.
         const status = err.response.status;
-        const msg = err.response.data?.message || '';
+        const msg = err.response.data?.error || err.response.data?.message || '';
         if (status === 401) {
           showError('Invalid credentials. Please check your email and password.', 'auth');
         } else if (status === 403) {
@@ -227,7 +191,7 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.card, { transform: [{ translateX: shakeAnim }] }]}>
-        <Image source={assets[0]} style={styles.logo} />
+        <Image source={assets[0]} style={styles.logo} contentFit="contain" />
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Sign in to continue</Text>
 
@@ -303,7 +267,7 @@ const styles = StyleSheet.create({
     elevation: 6, alignItems: 'center', 
     shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 15, shadowOffset: { width: 0, height: 4 },
   },
-  logo: { width: 90, height: 90, borderRadius: 45, marginBottom: 16 },
+  logo: { width: 200, height: 90, borderRadius: 12, marginBottom: 16 },
   title: { fontSize: 26, fontWeight: '800', marginBottom: 4, textAlign: 'center', color: '#1a365d' },
   subtitle: { fontSize: 14, color: '#718096', marginBottom: 24 },
 

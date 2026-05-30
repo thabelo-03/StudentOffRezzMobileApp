@@ -33,8 +33,8 @@ const AdminVerificationScreen = () => {
           'Success', 
           'User approved. Opening email client to notify user.',
           [{ text: 'OK', onPress: () => {
-             const subject = "Student Housing Connect Account Approved";
-             const body = "Congratulations! Your account has been verified.\n\nRegards,\nStudent Housing Connect Administrator";
+             const subject = "ThabStay Account Approved";
+             const body = "Congratulations! Your account has been verified.\n\nRegards,\nThabStay Administrator";
              Linking.openURL(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
           }}]
         );

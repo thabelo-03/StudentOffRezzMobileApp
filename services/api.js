@@ -1,8 +1,10 @@
 // services/api.js
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '../database/firebaseConfig'; // Import Firebase auth
 
+// Points at the ThabStay web backend (Express/Mongo). Override per-environment with
+// EXPO_PUBLIC_API_BASE_URL, e.g. http://<your-LAN-ip>:3001 for local dev or the
+// Heroku URL in production.
 const DEFAULT_BASE_URL = 'https://studentoffrezzmobileapp.onrender.com';
 
 const configuredBaseUrl = (process.env.EXPO_PUBLIC_API_BASE_URL || DEFAULT_BASE_URL)
@@ -24,19 +26,12 @@ const api = axios.create({
   },
 });
 
-// This part is crucial for the 'auth' middleware in your router
+// Attach the backend-issued JWT (stored at login/register) as a Bearer token.
+// The backend's `protect` middleware reads this Authorization header.
 api.interceptors.request.use(async (config) => {
-  const firebaseUser = auth.currentUser;
-  if (firebaseUser) {
-    const idToken = await firebaseUser.getIdToken(true); // Force refresh
-    config.headers.Authorization = `Bearer ${idToken}`;
-  } else {
-    // Fallback for cases where firebaseUser is not yet available,
-    // or if you still have non-Firebase authenticated routes
-    const storedToken = await AsyncStorage.getItem('token');
-    if (storedToken) {
-      config.headers.Authorization = `Bearer ${storedToken}`;
-    }
+  const storedToken = await AsyncStorage.getItem('token');
+  if (storedToken) {
+    config.headers.Authorization = `Bearer ${storedToken}`;
   }
   return config;
 });

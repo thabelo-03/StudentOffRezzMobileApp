@@ -4,8 +4,6 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '../database/firebaseConfig';
-import { signOut } from 'firebase/auth';
 
 const StudentInbox = ({ navigation }) => {
   const [conversations, setConversations] = useState([]);
@@ -41,9 +39,7 @@ const StudentInbox = ({ navigation }) => {
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
-      await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('token');
+      await AsyncStorage.multiRemove(['token', 'user']);
       setMenuVisible(false);
       navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     } catch (error) {

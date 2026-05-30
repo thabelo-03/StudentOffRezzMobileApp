@@ -5,8 +5,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { WebView } from 'react-native-webview';
 import api from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '../database/firebaseConfig';
-import { signOut } from 'firebase/auth';
 import {
   buildPropertiesHTML, buildBookingsHTML, buildRevenueHTML,
   generatePropertiesCSV, generateBookingsCSV, exportPDF, sharePDF
@@ -81,12 +79,16 @@ const LandlordDashboard = ({ navigation }) => {
     }
   };
 
-  useEffect(() => { 
-    fetchData(); 
-    if (auth.currentUser) {
-      const name = auth.currentUser.displayName || auth.currentUser.email?.split('@')[0];
-      if (name) setUserName(name);
-    }
+  useEffect(() => {
+    fetchData();
+    (async () => {
+      const stored = await AsyncStorage.getItem('user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        const name = u.name || u.email?.split('@')[0];
+        if (name) setUserName(name);
+      }
+    })();
   }, []);
 
   const onRefresh = useCallback(() => {
@@ -96,7 +98,6 @@ const LandlordDashboard = ({ navigation }) => {
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
       await AsyncStorage.multiRemove(['token', 'user']);
       setMenuVisible(false);
       navigation.reset({
@@ -111,7 +112,7 @@ const LandlordDashboard = ({ navigation }) => {
   const handleAccept = async (bookingId) => {
     try {
       setLoading(true);
-      await api.put(`/bookings/${bookingId}`, { status: 'accepted' });
+      await api.put(`/bookings/${bookingId}/status`, { status: 'accepted' });
       Alert.alert("Success", "Booking accepted.");
       onRefresh();
     } catch (error) {
@@ -124,7 +125,7 @@ const LandlordDashboard = ({ navigation }) => {
   const handleDecline = async (bookingId) => {
     try {
       setLoading(true);
-      await api.put(`/bookings/${bookingId}`, { status: 'rejected' });
+      await api.put(`/bookings/${bookingId}/status`, { status: 'rejected' });
       Alert.alert("Success", "Booking declined.");
       onRefresh();
     } catch (error) {
@@ -267,8 +268,8 @@ const LandlordDashboard = ({ navigation }) => {
             >
               <View style={styles.reqHeader}>
                 <View style={styles.reqInfo}>
-                  <Text style={styles.reqName}>{item.studentName || 'Student Request'}</Text>
-                  <Text style={styles.reqHouse}>{item.houseTitle || 'Property Inquiry'}</Text>
+                  <Text style={styles.reqName}>{item.student?.name || 'Student Request'}</Text>
+                  <Text style={styles.reqHouse}>{item.listing?.title || 'Property Inquiry'}</Text>
                 </View>
                 <View style={styles.reqDateBadge}>
                   <Text style={styles.reqDateText}>Pending</Text>
@@ -276,11 +277,11 @@ const LandlordDashboard = ({ navigation }) => {
               </View>
 
               <View style={styles.actionRow}>
-                <TouchableOpacity style={[styles.actionBtn, styles.declineBtn]} onPress={() => handleDecline(item.id)}>
+                <TouchableOpacity style={[styles.actionBtn, styles.declineBtn]} onPress={() => handleDecline(item._id)}>
                   <Icon name="close" size={16} color="#D32F2F" />
                   <Text style={styles.declineText}>Decline</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.actionBtn, styles.acceptBtn]} onPress={() => handleAccept(item.id)}>
+                <TouchableOpacity style={[styles.actionBtn, styles.acceptBtn]} onPress={() => handleAccept(item._id)}>
                   <Icon name="check" size={16} color="#388E3C" />
                   <Text style={styles.acceptText}>Accept</Text>
                 </TouchableOpacity>

@@ -16,9 +16,33 @@ const LOCATION_OPTIONS = [
 ];
 
 const AMENITY_OPTIONS = [
-  'Borehole', 'Wi-Fi', 'Solar', 'ZESA', 
+  'Borehole', 'Wi-Fi', 'Solar', 'ZESA',
   'Play Grounds', 'Swimming', 'Gas Stoves', 'Geyser'
 ];
+
+// Resolve a stored image path (e.g. "uploads/listings/x.jpg") to a full URL.
+const resolveImageUrl = (u) => {
+  if (!u) return null;
+  if (u.startsWith('http') || u.startsWith('data:')) return u;
+  return `${BASE_URL}/${String(u).replace(/^\/+/, '').replace(/\\/g, '/')}`;
+};
+
+// Map a web-backend Listing (Mongo) into the shape this screen's UI expects.
+const normalizeListing = (l) => {
+  if (!l) return l;
+  const images = (l.imageUrls || l.images || []).map(resolveImageUrl).filter(Boolean);
+  const location = l.address
+    ? [l.address.street, l.address.city].filter(Boolean).join(', ')
+    : (l.location || '');
+  return {
+    ...l,
+    id: l._id || l.id,
+    location,
+    images,
+    imageUrls: images,
+    createdAt: l.createdAt ? new Date(l.createdAt).getTime() : null,
+  };
+};
 
 const MyListings = () => {
   const [houses, setHouses] = useState([]);
@@ -59,7 +83,7 @@ const MyListings = () => {
           onPress: async () => {
             try {
               setLoading(true);
-              await api.delete(`/houses/${houseId}`);
+              await api.delete(`/listings/${houseId}`);
               Alert.alert('Success', 'Property deleted successfully.');
               fetchHouses(); // Refresh the list
             } catch (error) {
@@ -87,9 +111,11 @@ const MyListings = () => {
       const user = JSON.parse(userJson);
       setCurrentUser(user);
 
-      const response = await api.get('/listings/mine');
+      const response = await api.get('/listings/mine'); // returns a bare array
+      // Normalize Mongo listing shape -> shape this screen's UI expects.
+      const normalized = (response.data || []).map(normalizeListing);
       // Sort by newest first
-      const sorted = (response.data || []).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      const sorted = normalized.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       setHouses(sorted);
     } catch (error) {
       console.error('Error fetching houses:', error);
@@ -225,6 +251,12 @@ const MyListings = () => {
         return;
       }
 
+      // TODO (PORT — Phase 2 landlord create/edit): the web backend's
+      // POST/PUT /api/listings expects multipart/form-data with real image files
+      // (upload.array('images', 3)), `address` as a JSON string { street, city },
+      // and REQUIRED `phoneNumber` + `totalRooms`. This still sends base64 JSON to
+      // the old `/houses` route and WILL FAIL until rewritten to FormData and the
+      // form gains phoneNumber/totalRooms/street+city fields. See docs/PORTING.md.
       if (editingHouseId) {
         await api.put(`/houses/${editingHouseId}`, houseData);
         Alert.alert('Success', 'Property updated');

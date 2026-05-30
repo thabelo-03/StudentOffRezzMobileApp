@@ -7,11 +7,39 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import api, { BASE_URL } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '../database/firebaseConfig';
-import { signOut } from 'firebase/auth';
-import { getDatabase, ref, onValue, update } from 'firebase/database';
 
 const { width } = Dimensions.get('window');
+
+// Resolve a stored image path (e.g. "uploads/listings/x.jpg") to a full URL.
+const resolveImageUrl = (u) => {
+  if (!u) return null;
+  if (u.startsWith('http') || u.startsWith('data:')) return u;
+  return `${BASE_URL}/${String(u).replace(/^\/+/, '').replace(/\\/g, '/')}`;
+};
+
+// Map a web-backend Listing (Mongo) into the shape this screen's UI expects.
+// The screen was originally written against the Firebase RTDB house shape.
+const normalizeListing = (l) => {
+  if (!l) return l;
+  const landlord = l.landlordId && typeof l.landlordId === 'object' ? l.landlordId : null;
+  const images = (l.imageUrls || l.images || []).map(resolveImageUrl).filter(Boolean);
+  const location = l.address
+    ? [l.address.street, l.address.city].filter(Boolean).join(', ')
+    : (l.location || '');
+  return {
+    ...l,
+    id: l._id || l.id,
+    location,
+    images,
+    imageUrls: images,
+    createdAt: l.createdAt ? new Date(l.createdAt).getTime() : null,
+    // landlordId is populated as an object on the backend; expose the id string
+    // (used for booking/chat) plus a display name.
+    landlordId: landlord ? landlord._id : l.landlordId,
+    landlordName: landlord ? landlord.name : undefined,
+    universityName: l.universityId && typeof l.universityId === 'object' ? l.universityId.name : undefined,
+  };
+};
 
 const StudentHomeScreen = () => {
   const navigation = useNavigation();
@@ -60,30 +88,26 @@ const StudentHomeScreen = () => {
 
   useEffect(() => {
     const getUser = async () => {
-      if (auth.currentUser) {
-        const db = getDatabase();
-        const userRef = ref(db, `users/${auth.currentUser.uid}`);
-        onValue(userRef, (snapshot) => {
-          const data = snapshot.val();
-          if (data) {
-            if (data.username) setUserName(data.username);
-            
-            // Check if essential student info is missing
-            if (!data.program || !data.level) {
-              setProfileModalVisible(true);
-            }
-          }
-        });
-      }
+      // User details come from the stored login payload (backend JWT auth).
+      const stored = await AsyncStorage.getItem('user');
+      if (!stored) return;
+      const data = JSON.parse(stored);
+      if (data.name) setUserName(data.name);
+
+      // NOTE: the old Firebase build stored program/level on the RTDB user object,
+      // so this modal auto-popped when they were missing. The web backend keeps that
+      // data on the StudentProfile model (PUT /profiles/student/me) — a richer profile
+      // requiring university/campus/lifestyle/logistics, which this lightweight modal
+      // can't satisfy. Auto-popup is disabled until the full student profile flow is
+      // ported. TODO: drive this from GET /api/profiles completeness instead.
+      // if (!data.program || !data.level) setProfileModalVisible(true);
     };
     getUser();
   }, []);
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
-      await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('token');
+      await AsyncStorage.multiRemove(['token', 'user']);
       setMenuVisible(false);
       navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     } catch (error) {
@@ -115,14 +139,10 @@ const StudentHomeScreen = () => {
     
     try {
       setSavingProfile(true);
-      const db = getDatabase();
-      const userRef = ref(db, `users/${auth.currentUser.uid}`);
-      
-      await update(userRef, {
-        program,
-        level
-      });
-      
+      // TODO (remapping phase): confirm the exact backend route/shape for
+      // updating a student profile (program/level live on StudentProfile).
+      await api.put('/profiles', { program, level });
+
       setProfileModalVisible(false);
       Alert.alert("Success", "Profile updated successfully!");
     } catch (error) {
@@ -135,11 +155,15 @@ const StudentHomeScreen = () => {
 
   const fetchHouses = async () => {
     try {
-      const response = await api.get('/houses');
+      // Web backend: GET /listings returns { listings, currentPage, totalPages, totalListings }.
+      const response = await api.get('/listings', { params: { limit: 50, populate: 'imageUrls' } });
+      const raw = response.data?.listings || response.data || [];
+      const normalized = raw.map(normalizeListing);
       // Sort by newest first
-      const sorted = (response.data || []).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      const sorted = normalized.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       setHouses(sorted);
     } catch (error) {
+      console.error('fetchHouses error:', error?.response?.data || error.message);
       Alert.alert('Error', 'Could not load listings.');
     } finally {
       setLoading(false);
@@ -312,21 +336,25 @@ const StudentHomeScreen = () => {
     
     try {
       setLoading(true);
-      // 1. Create Booking Record (Pending)
+      // 1. Create Booking Request (backend derives landlord + amount from the listing).
       await api.post('/bookings', {
-        houseId: activeHouse.id,
-        landlordId: activeHouse.landlordId,
-        amount: activeHouse.price,
-        houseName: activeHouse.title || activeHouse.houseName
+        listingId: activeHouse.id,
+        message: `I am interested in ${activeHouse.title || activeHouse.houseName}. Is it available?`,
       });
 
-      // 2. Send Initial Message
-      await api.post('/chat/send', {
-        receiverId: activeHouse.landlordId,
-        text: `I am interested in ${activeHouse.title || activeHouse.houseName}. Is it available?`,
-        houseTitle: activeHouse.title || activeHouse.houseName,
-        houseId: activeHouse.id
-      });
+      // 2. Send an initial chat message. Chat isn't ported yet (conversation-id model
+      //    + socket.io), so keep this non-fatal — a failure here must not mask the
+      //    successful booking above. TODO: wire to the real chat flow.
+      try {
+        await api.post('/chat/send', {
+          receiverId: activeHouse.landlordId,
+          text: `I am interested in ${activeHouse.title || activeHouse.houseName}. Is it available?`,
+          houseTitle: activeHouse.title || activeHouse.houseName,
+          houseId: activeHouse.id
+        });
+      } catch (chatErr) {
+        console.log('Initial chat message skipped (chat not yet ported):', chatErr?.response?.status || chatErr?.message);
+      }
 
       Alert.alert("Request Sent", "Your booking request has been sent to the landlord. You can continue the conversation in your Inbox.");
       
@@ -345,7 +373,11 @@ const StudentHomeScreen = () => {
   };
 
   const getBookingStatus = (houseId) => {
-    const booking = myBookings.find(b => b.houseId === houseId);
+    // Backend booking.listing is populated ({ _id, ... }) or an id string.
+    const booking = myBookings.find(b => {
+      const listingId = b.listing?._id || b.listing;
+      return listingId === houseId;
+    });
     return booking ? booking : null;
   };
 
@@ -371,7 +403,7 @@ const StudentHomeScreen = () => {
 
     if (booking.status === 'accepted') {
       return (
-        <TouchableOpacity style={[styles.footerMainBtn, { backgroundColor: '#2E7D32' }]} onPress={() => { setDetailVisible(false); navigation.navigate('Payments', { house: activeHouse, bookingId: booking.bookingId }); }}>
+        <TouchableOpacity style={[styles.footerMainBtn, { backgroundColor: '#2E7D32' }]} onPress={() => { setDetailVisible(false); navigation.navigate('Payments', { house: activeHouse, bookingId: booking._id }); }}>
           <Text style={styles.footerBtnText}>Pay Now</Text>
         </TouchableOpacity>
       );

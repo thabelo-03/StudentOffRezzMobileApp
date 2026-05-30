@@ -305,7 +305,7 @@ const SignUpScreen = ({ navigation }) => {
           <View style={styles.modalContainer}>
             <View style={styles.modalView}>
               <MCIcon name="check-circle" size={60} color="#38a169" style={{ marginBottom: 16 }} />
-              <Text style={styles.modalTitle}>Welcome to Student Housing Connect!</Text>
+              <Text style={styles.modalTitle}>Welcome to ThabStay!</Text>
               <Text style={styles.modalSub}>{username}, your account has been created successfully.</Text>
               <TouchableOpacity style={styles.modalButton} onPress={closeModal}>
                 <Text style={styles.modalButtonText}>Continue to Login</Text>

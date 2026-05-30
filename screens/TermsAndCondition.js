@@ -8,16 +8,16 @@ const TermsAndConditions = ({ navigation }) => {
     {
       icon: 'handshake-outline',
       title: '1. Acceptance of Terms',
-      text: 'By accessing or using the Student Housing Connect app, you agree to be bound by these Terms and Conditions, along with our Privacy Policy. If you do not agree to these terms, you must not use our services. Your continued use of the platform constitutes acceptance of any future modifications.',
+      text: 'By accessing or using the ThabStay app, you agree to be bound by these Terms and Conditions, along with our Privacy Policy. If you do not agree to these terms, you must not use our services. Your continued use of the platform constitutes acceptance of any future modifications.',
     },
     {
       icon: 'book-open-variant',
       title: '2. Definitions',
       items: [
-        { label: 'User', desc: 'Any individual (student or landlord) who registers and uses the Student Housing Connect platform.' },
+        { label: 'User', desc: 'Any individual (student or landlord) who registers and uses the ThabStay platform.' },
         { label: 'Landlord', desc: 'An individual or entity that owns properties and lists them for rent within the app.' },
         { label: 'Student', desc: 'An individual enrolled at a recognized institution seeking off-campus rental accommodation.' },
-        { label: 'Platform', desc: 'The Student Housing Connect mobile application and any associated web services.' },
+        { label: 'Platform', desc: 'The ThabStay mobile application and any associated web services.' },
       ],
     },
     {
@@ -31,22 +31,22 @@ const TermsAndConditions = ({ navigation }) => {
     {
       icon: 'file-document-outline',
       title: '4. Rental Agreement',
-      text: 'A rental agreement is formed between the landlord and student upon acceptance of a booking request. Student Housing Connect facilitates this connection but is not a party to the rental agreement itself. All terms of tenancy (duration, deposits, house rules) are between the landlord and student.',
+      text: 'A rental agreement is formed between the landlord and student upon acceptance of a booking request. ThabStay facilitates this connection but is not a party to the rental agreement itself. All terms of tenancy (duration, deposits, house rules) are between the landlord and student.',
     },
     {
       icon: 'credit-card-outline',
       title: '5. Payments & Transactions',
-      text: 'All rental payments must be processed and documented through the Student Housing Connect platform. Proof of payment should be uploaded within the app. Late payment fees, if applicable, are determined by the landlord and outlined in the rental agreement. Student Housing Connect is not responsible for disputes regarding payment amounts.',
+      text: 'All rental payments must be processed and documented through the ThabStay platform. Proof of payment should be uploaded within the app. Late payment fees, if applicable, are determined by the landlord and outlined in the rental agreement. ThabStay is not responsible for disputes regarding payment amounts.',
     },
     {
       icon: 'shield-check-outline',
       title: '6. Verification & Safety',
-      text: 'All landlords must complete identity verification before listing properties. Students must verify their enrollment status. Student Housing Connect reserves the right to reject or remove unverified accounts. While we strive to verify all users, we cannot guarantee the accuracy of all information provided by third parties.',
+      text: 'All landlords must complete identity verification before listing properties. Students must verify their enrollment status. ThabStay reserves the right to reject or remove unverified accounts. While we strive to verify all users, we cannot guarantee the accuracy of all information provided by third parties.',
     },
     {
       icon: 'message-text-outline',
       title: '7. Communication',
-      text: 'Users are encouraged to communicate through the in-app messaging system for transparency and dispute resolution. Student Housing Connect is not responsible for agreements made outside the platform. All in-app communications may be monitored for safety and compliance purposes.',
+      text: 'Users are encouraged to communicate through the in-app messaging system for transparency and dispute resolution. ThabStay is not responsible for agreements made outside the platform. All in-app communications may be monitored for safety and compliance purposes.',
     },
     {
       icon: 'lock-outline',
@@ -66,17 +66,17 @@ const TermsAndConditions = ({ navigation }) => {
     {
       icon: 'cancel',
       title: '10. Account Termination',
-      text: 'Student Housing Connect reserves the right to suspend or terminate any account that violates these Terms, engages in fraudulent activity, or receives multiple verified complaints. Users may also delete their own account at any time through the app settings.',
+      text: 'ThabStay reserves the right to suspend or terminate any account that violates these Terms, engages in fraudulent activity, or receives multiple verified complaints. Users may also delete their own account at any time through the app settings.',
     },
     {
       icon: 'scale-balance',
       title: '11. Limitation of Liability',
-      text: 'Student Housing Connect acts as a platform connecting landlords and students. We are not liable for any damages, losses, or disputes arising from transactions between users. Users engage in rental agreements at their own risk. Our total liability shall not exceed the fees paid by you to Student Housing Connect in the 12 months preceding any claim.',
+      text: 'ThabStay acts as a platform connecting landlords and students. We are not liable for any damages, losses, or disputes arising from transactions between users. Users engage in rental agreements at their own risk. Our total liability shall not exceed the fees paid by you to ThabStay in the 12 months preceding any claim.',
     },
     {
       icon: 'pencil-outline',
       title: '12. Modifications',
-      text: 'Student Housing Connect reserves the right to modify these Terms and Conditions at any time. Users will be notified of significant changes through the app and via email. Continued use of the platform after modifications constitutes acceptance of the updated terms.',
+      text: 'ThabStay reserves the right to modify these Terms and Conditions at any time. Users will be notified of significant changes through the app and via email. Continued use of the platform after modifications constitutes acceptance of the updated terms.',
     },
   ];
 
@@ -89,7 +89,7 @@ const TermsAndConditions = ({ navigation }) => {
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Terms & Conditions</Text>
-          <Text style={styles.headerSub}>Student Housing Connect Platform Agreement</Text>
+          <Text style={styles.headerSub}>ThabStay Platform Agreement</Text>
         </View>
         <MCIcon name="shield-check" size={28} color="rgba(255,255,255,0.6)" />
       </View>
@@ -99,7 +99,7 @@ const TermsAndConditions = ({ navigation }) => {
         <View style={styles.introCard}>
           <MCIcon name="information-outline" size={20} color="#3182ce" />
           <Text style={styles.introText}>
-            Please read these terms carefully before using Student Housing Connect. By creating an account, you acknowledge and agree to these terms.
+            Please read these terms carefully before using ThabStay. By creating an account, you acknowledge and agree to these terms.
           </Text>
         </View>
 

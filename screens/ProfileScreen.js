@@ -7,33 +7,23 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { getDatabase, ref, onValue } from 'firebase/database';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '../database/firebaseConfig';
-import { signOut } from 'firebase/auth';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const ProfileScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const userId = auth.currentUser?.uid;
-    if (!userId) return;
-
-    const db = getDatabase();
-    const userRef = ref(db, `users/${userId}`);
-
-    onValue(userRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        setUser(data);
-      }
-    });
+    (async () => {
+      // User details are stored in AsyncStorage at login (backend JWT auth).
+      // TODO (remapping phase): fetch full/fresh profile from GET /api/profiles.
+      const stored = await AsyncStorage.getItem('user');
+      if (stored) setUser(JSON.parse(stored));
+    })();
   }, []);
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
       await AsyncStorage.multiRemove(['token', 'user']);
       navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     } catch (error) {
@@ -51,16 +41,15 @@ const ProfileScreen = ({ navigation }) => {
             <Image
               source={{
                 uri:
-                  user.photoURL ||
+                  user.profilePicture ||
                   'https://cdn-icons-png.flaticon.com/512/149/149071.png',
               }}
               style={styles.userIcon}
             />
             <View style={styles.nameContainer}>
-              <Text style={styles.userName}>{user.username}</Text>
-              <Text style={styles.userUsername}>@{user.username}</Text>
+              <Text style={styles.userName}>{user.name}</Text>
               <Text style={styles.userEmail}>{user.email}</Text>
-              <Text style={styles.userPhone}>{user.phone}</Text>
+              <Text style={styles.userPhone}>{user.phoneNumber}</Text>
               <Text style={styles.userRole}>{user.role}</Text>
             </View>
             <View style={styles.statusIndicator} />
