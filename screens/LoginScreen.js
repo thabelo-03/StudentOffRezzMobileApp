@@ -120,23 +120,15 @@ export default function LoginScreen() {
       setLoading(false);
 
       // 8. Role-Based Navigation Logic
-      // NOTE: the web backend exposes a single `isVerified` flag on the user.
-      // (Richer per-role verification lives on the Student/Landlord profile models;
-      // wire that up when the verification screens are ported — see docs/PORTING.md.)
+      // Parity with the web app: verification is a trust badge / admin-approval flow,
+      // not a hard gate on access. Users go straight to their home. Landlords can
+      // submit verification docs later from their dashboard (LandlordVerification).
       if (user.role === 'admin') {
         navigation.navigate('AdminDashboard');
       } else if (user.role === 'landlord') {
-        if (!user.isVerified) {
-          navigation.navigate('LandlordVerification', { user });
-        } else {
-          navigation.navigate('Landlord');
-        }
+        navigation.navigate('Landlord');
       } else if (user.role === 'student') {
-        if (!user.isVerified) {
-          navigation.navigate('StudentVerification', { user });
-        } else {
-          navigation.navigate('Student');
-        }
+        navigation.navigate('Student');
       } else {
         showError('Your account role is not recognized. Please contact support.', 'general');
       }

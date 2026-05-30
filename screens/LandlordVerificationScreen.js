@@ -1,89 +1,106 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import api from '../services/api';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const LandlordVerificationScreen = ({ navigation, route }) => {
-  // Expecting user details passed from LoginScreen
-  const { user } = route.params || {}; 
-  
-  const [proofOfRes, setProofOfRes] = useState('');
-  const [idDocument, setIdDocument] = useState('');
+  const { user } = route.params || {};
+
+  const [nationalIdNumber, setNationalIdNumber] = useState('');
+  const [idDoc, setIdDoc] = useState(null);        // { uri, name, type }
+  const [proofDoc, setProofDoc] = useState(null);  // { uri, name, type }
   const [loading, setLoading] = useState(false);
 
+  const pickDoc = async (setter, label) => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') return Alert.alert('Permission needed', 'Please allow photo access.');
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'Images', quality: 0.6 });
+    if (!result.canceled && result.assets?.[0]) {
+      const uri = result.assets[0].uri;
+      const ext = uri.split('.').pop().split('?')[0] || 'jpg';
+      setter({ uri, name: `${label}-${Date.now()}.${ext}`, type: `image/${ext === 'png' ? 'png' : 'jpeg'}` });
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!proofOfRes || !idDocument) {
-      Alert.alert('Missing Documents', 'Please provide links for both PDF documents.');
+    if (!nationalIdNumber.trim() || !idDoc || !proofDoc) {
+      Alert.alert('Missing Info', 'Please enter your National ID number and upload both documents.');
       return;
     }
 
     setLoading(true);
     try {
-      // Use the centralized API service instead of fetch
-      const response = await api.put('/auth/submit-documents', {
-          uid: user?.uid,
-          documents: {
-            proofOfResidence: proofOfRes,
-            idDocument: idDocument
-          }
+      const form = new FormData();
+      form.append('nationalIdNumber', nationalIdNumber);
+      form.append('nationalIdFile', idDoc);
+      form.append('proofOfAddressFile', proofDoc);
+
+      await api.put('/profiles/landlord/me', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       Alert.alert(
-        'Submission Successful', 
-        'Your documents have been submitted for review. You will be notified via email once an admin approves your account.',
-        [
-          { text: 'OK', onPress: () => navigation.navigate('Login') }
-        ]
+        'Submission Successful',
+        'Your documents have been submitted for review. You will be notified once an admin approves your account.',
+        [{ text: 'OK', onPress: () => navigation.navigate('Landlord') }]
       );
     } catch (error) {
-      console.error("Submission Error:", error);
-      const message = error.response?.data?.message || 'Network error. Please try again.';
-      Alert.alert('Error', message);
+      console.error("Submission Error:", error?.response?.data || error.message);
+      Alert.alert('Error', error.response?.data?.error || 'Network error. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const DocButton = ({ doc, onPress, label }) => (
+    <TouchableOpacity style={[styles.docBtn, doc && styles.docBtnDone]} onPress={onPress}>
+      <Icon name={doc ? 'check-circle' : 'upload'} size={20} color={doc ? '#28a745' : '#007BFF'} />
+      <Text style={[styles.docBtnText, doc && { color: '#28a745' }]} numberOfLines={1}>
+        {doc ? doc.name : label}
+      </Text>
+    </TouchableOpacity>
+  );
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Account Verification</Text>
       <Text style={styles.subtitle}>
-        Welcome {user?.username}. To activate your Landlord account, please submit the required documents in PDF format.
+        Welcome {user?.name || ''}. To get your Landlord account verified, submit your National ID
+        and proof of address. You can keep using the app while this is reviewed.
       </Text>
 
-      <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Identity Documents</Text>
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Proof of Residence (URL to PDF)</Text>
+        <Text style={styles.label}>National ID Number</Text>
         <TextInput
           style={styles.input}
-          placeholder="Paste link to PDF document..."
-          value={proofOfRes}
-          onChangeText={setProofOfRes}
-          autoCapitalize="none"
+          placeholder="e.g. 12-345678 T 12"
+          value={nationalIdNumber}
+          onChangeText={setNationalIdNumber}
+          autoCapitalize="characters"
         />
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>ID Document (URL to PDF)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Paste link to PDF of ID..."
-          value={idDocument}
-          onChangeText={setIdDocument}
-          autoCapitalize="none"
-        />
+        <Text style={styles.label}>National ID (photo)</Text>
+        <DocButton doc={idDoc} onPress={() => pickDoc(setIdDoc, 'national-id')} label="Upload ID photo" />
       </View>
 
-      <TouchableOpacity 
-        style={[styles.button, loading && styles.disabledButton]} 
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Proof of Address (photo)</Text>
+        <DocButton doc={proofDoc} onPress={() => pickDoc(setProofDoc, 'proof-of-address')} label="Upload proof of address" />
+      </View>
+
+      <TouchableOpacity
+        style={[styles.button, loading && styles.disabledButton]}
         onPress={handleSubmit}
         disabled={loading}
       >
         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Submit for Review</Text>}
       </TouchableOpacity>
-      
-      <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.linkButton}>
-        <Text style={styles.linkText}>Back to Login</Text>
+
+      <TouchableOpacity onPress={() => navigation.navigate('Landlord')} style={styles.linkButton}>
+        <Text style={styles.linkText}>Skip for now</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -96,6 +113,9 @@ const styles = StyleSheet.create({
   inputGroup: { marginBottom: 20 },
   label: { fontSize: 14, fontWeight: '600', marginBottom: 5, color: '#333' },
   input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#f9f9f9' },
+  docBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#007BFF', borderStyle: 'dashed', borderRadius: 8, padding: 14, backgroundColor: '#f5f9ff' },
+  docBtnDone: { borderColor: '#28a745', borderStyle: 'solid', backgroundColor: '#f3fbf5' },
+  docBtnText: { color: '#007BFF', fontWeight: '600', flex: 1 },
   button: { backgroundColor: '#007BFF', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10 },
   disabledButton: { backgroundColor: '#a0cfff' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
