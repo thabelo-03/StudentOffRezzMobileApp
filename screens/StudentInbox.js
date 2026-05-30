@@ -109,11 +109,11 @@ const StudentInbox = ({ navigation }) => {
       <Modal transparent={true} visible={menuVisible} animationType="fade" onRequestClose={() => setMenuVisible(false)}>
         <TouchableOpacity style={styles.menuOverlay} onPress={() => setMenuVisible(false)}>
           <View style={styles.menuContainer}>
-            <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); Alert.alert("Settings", "Coming Soon"); }}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); navigation.navigate('Settings'); }}>
               <Icon name="cog-outline" size={20} color="#333" />
               <Text style={styles.menuText}>Settings</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); Alert.alert("Help", "Contact support"); }}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); navigation.navigate('Help'); }}>
               <Icon name="help-circle-outline" size={20} color="#333" />
               <Text style={styles.menuText}>Help</Text>
             </TouchableOpacity>

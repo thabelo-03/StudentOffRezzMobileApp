@@ -144,7 +144,7 @@ const TermsAndConditions = ({ navigation }) => {
           </View>
           <View style={styles.contactRow}>
             <MCIcon name="email-outline" size={16} color="#718096" />
-            <Text style={styles.contactInfo}>support@studenthousingconnect.com</Text>
+            <Text style={styles.contactInfo}>support@thabstay.com</Text>
           </View>
         </View>
       </ScrollView>
