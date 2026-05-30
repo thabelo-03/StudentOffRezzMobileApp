@@ -286,7 +286,7 @@ const StudentHomeScreen = () => {
             <View style={[styles.bookingStatusBadge, 
               booking.status === 'accepted' ? { backgroundColor: '#2E7D32' } : 
               booking.status === 'pending' ? { backgroundColor: '#FFC107' } :
-              booking.status === 'paid' ? { backgroundColor: '#2196F3' } :
+              booking.status === 'paid' ? { backgroundColor: '#2563eb' } :
               { backgroundColor: '#D32F2F' }
             ]}>
               <Text style={styles.bookingStatusText}>
@@ -300,7 +300,7 @@ const StudentHomeScreen = () => {
           <View style={styles.cardHeader}>
             <Text style={styles.houseName} numberOfLines={1}>{item.title || item.houseName}</Text>
             {item.landlordVerified && (
-              <Icon name="check-decagram" size={20} color="#2196F3" style={{ marginLeft: 5, marginRight: 5 }} />
+              <Icon name="check-decagram" size={20} color="#2563eb" style={{ marginLeft: 5, marginRight: 5 }} />
             )}
             <View style={styles.ratingContainer}>
               <Icon name="star" size={14} color="#FFD700" />
@@ -428,7 +428,7 @@ const StudentHomeScreen = () => {
 
     if (booking.status === 'paid') {
       return (
-        <TouchableOpacity style={[styles.footerMainBtn, { backgroundColor: '#2196F3' }]} disabled>
+        <TouchableOpacity style={[styles.footerMainBtn, { backgroundColor: '#2563eb' }]} disabled>
           <Text style={styles.footerBtnText}>Paid</Text>
         </TouchableOpacity>
       );
@@ -566,7 +566,7 @@ const StudentHomeScreen = () => {
               {activeFilterModal === 'location' && uniqueLocations.map((loc, index) => (
                 <TouchableOpacity key={index} style={styles.filterOption} onPress={() => applyFilter('location', loc)}>
                   <Text style={[styles.filterOptionText, filters.location === loc && styles.filterOptionTextActive]}>{loc}</Text>
-                  {filters.location === loc && <Icon name="check" size={20} color="#007BFF" />}
+                  {filters.location === loc && <Icon name="check" size={20} color="#2563eb" />}
                 </TouchableOpacity>
               ))}
 
@@ -574,15 +574,15 @@ const StudentHomeScreen = () => {
                 <>
                   <TouchableOpacity style={styles.filterOption} onPress={() => applyFilter('price', 'low')}>
                     <Text style={[styles.filterOptionText, filters.price === 'low' && styles.filterOptionTextActive]}>Under $50</Text>
-                    {filters.price === 'low' && <Icon name="check" size={20} color="#007BFF" />}
+                    {filters.price === 'low' && <Icon name="check" size={20} color="#2563eb" />}
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.filterOption} onPress={() => applyFilter('price', 'mid')}>
                     <Text style={[styles.filterOptionText, filters.price === 'mid' && styles.filterOptionTextActive]}>$50 - $100</Text>
-                    {filters.price === 'mid' && <Icon name="check" size={20} color="#007BFF" />}
+                    {filters.price === 'mid' && <Icon name="check" size={20} color="#2563eb" />}
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.filterOption} onPress={() => applyFilter('price', 'high')}>
                     <Text style={[styles.filterOptionText, filters.price === 'high' && styles.filterOptionTextActive]}>Over $100</Text>
-                    {filters.price === 'high' && <Icon name="check" size={20} color="#007BFF" />}
+                    {filters.price === 'high' && <Icon name="check" size={20} color="#2563eb" />}
                   </TouchableOpacity>
                 </>
               )}
@@ -590,7 +590,7 @@ const StudentHomeScreen = () => {
               {activeFilterModal === 'gender' && ['Male', 'Female', 'Mixed'].map((g) => (
                 <TouchableOpacity key={g} style={styles.filterOption} onPress={() => applyFilter('gender', g)}>
                   <Text style={[styles.filterOptionText, filters.gender === g && styles.filterOptionTextActive]}>{g}</Text>
-                  {filters.gender === g && <Icon name="check" size={20} color="#007BFF" />}
+                  {filters.gender === g && <Icon name="check" size={20} color="#2563eb" />}
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -632,7 +632,7 @@ const StudentHomeScreen = () => {
         </View>
       </Modal>
 
-      {loading ? <ActivityIndicator size="large" color="#007BFF" style={{marginTop: 50}} /> : (
+      {loading ? <ActivityIndicator size="large" color="#2563eb" style={{marginTop: 50}} /> : (
         <FlatList data={filteredHouses} renderItem={renderHouseItem} keyExtractor={item => item.id} contentContainerStyle={{ paddingBottom: 30 }} />
       )}
 
@@ -716,7 +716,7 @@ const StudentHomeScreen = () => {
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Text style={styles.sheetTitle}>{activeHouse.title || activeHouse.houseName}</Text>
                     {activeHouse.landlordVerified && (
-                      <Icon name="check-decagram" size={24} color="#2196F3" style={{ marginLeft: 8, marginTop: -5 }} />
+                      <Icon name="check-decagram" size={24} color="#2563eb" style={{ marginLeft: 8, marginTop: -5 }} />
                     )}
                   </View>
                   <Text style={styles.sheetLocation}>{activeHouse.location}</Text>
@@ -907,14 +907,14 @@ const styles = StyleSheet.create({
   profileModalContainer: { backgroundColor: '#fff', width: '85%', borderRadius: 15, padding: 20, elevation: 5 },
   label: { fontSize: 14, fontWeight: 'bold', marginBottom: 5, color: '#333', marginTop: 10 },
   input: { backgroundColor: '#F5F5F5', borderRadius: 8, padding: 10, borderWidth: 1, borderColor: '#E0E0E0' },
-  saveProfileBtn: { backgroundColor: '#007BFF', padding: 12, borderRadius: 8, alignItems: 'center', marginTop: 20 },
+  saveProfileBtn: { backgroundColor: '#2563eb', padding: 12, borderRadius: 8, alignItems: 'center', marginTop: 20 },
 
   divider: { height: 1, backgroundColor: '#EEEEEE', marginVertical: 20 },
 
   // Filter Styles
   filterRow: { marginBottom: 15, height: 42 },
   filterBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 22, borderWidth: 1, borderColor: '#e2e8f0', marginRight: 0, elevation: 1 },
-  filterBtnActive: { backgroundColor: '#3182ce', borderColor: '#3182ce' },
+  filterBtnActive: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
   filterBtnText: { marginRight: 5, color: '#4a5568', fontWeight: '600', fontSize: 13 },
   filterBtnTextActive: { color: '#FFF' },
   clearFilterBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#e53e3e', justifyContent: 'center', alignItems: 'center' },
@@ -923,7 +923,7 @@ const styles = StyleSheet.create({
   filterModalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, textAlign: 'center', color: '#333' },
   filterOption: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
   filterOptionText: { fontSize: 16, color: '#333' },
-  filterOptionTextActive: { color: '#007BFF', fontWeight: 'bold' },
+  filterOptionTextActive: { color: '#2563eb', fontWeight: 'bold' },
   closeFilterModalBtn: { marginTop: 15, alignItems: 'center', padding: 10 },
 
   // Carousel Arrows & Dots

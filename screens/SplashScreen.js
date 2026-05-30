@@ -71,7 +71,7 @@ const SplashScreen = () => {
       </Animated.View>
 
       <View style={styles.footer}>
-        <ActivityIndicator size="small" color="#007BFF" />
+        <ActivityIndicator size="small" color="#2563eb" />
         <Text style={styles.version}>v1.0.0</Text>
       </View>
     </View>
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 42,
     fontWeight: '800',
-    color: '#007BFF',
+    color: '#2563eb',
     letterSpacing: 1,
     marginBottom: 10,
   },

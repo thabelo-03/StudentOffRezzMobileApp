@@ -20,7 +20,7 @@ const HelpScreen = () => {
       {FAQS.map((f, i) => (
         <View key={i} style={styles.card}>
           <View style={styles.qRow}>
-            <Icon name="help-circle-outline" size={20} color="#3182ce" />
+            <Icon name="help-circle-outline" size={20} color="#2563eb" />
             <Text style={styles.q}>{f.q}</Text>
           </View>
           <Text style={styles.a}>{f.a}</Text>
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   qRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
   q: { flex: 1, fontSize: 15, fontWeight: '700', color: '#2D3748' },
   a: { fontSize: 14, color: '#4A5568', lineHeight: 20 },
-  contactBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#3182ce', borderRadius: 12, padding: 16, marginTop: 4 },
+  contactBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#2563eb', borderRadius: 12, padding: 16, marginTop: 4 },
   contactText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });
 

@@ -107,7 +107,7 @@ const ManageUsersScreen = () => {
   if (loading && !refreshing) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#007BFF" />
+        <ActivityIndicator size="large" color="#2563eb" />
       </View>
     );
   }
@@ -158,7 +158,7 @@ const ManageUsersScreen = () => {
                 <Icon name={item.status === 'suspended' ? "account-check" : "account-off"} size={22} color={item.status === 'suspended' ? "#4CAF50" : "#FF9800"} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionBtn} onPress={() => handleResetPassword(item)}>
-                <Icon name="lock-reset" size={22} color="#2196F3" />
+                <Icon name="lock-reset" size={22} color="#2563eb" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionBtn} onPress={() => handleDelete(item)}>
                 <Icon name="trash-can-outline" size={22} color="#F44336" />
@@ -168,7 +168,7 @@ const ManageUsersScreen = () => {
         )}
         ListEmptyComponent={<Text style={styles.emptyText}>No users found.</Text>}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#007BFF']} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2563eb']} />
         }
       />
     </View>
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
 
   filterContainer: { flexDirection: 'row', marginBottom: 20, gap: 10 },
   filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#f0f0f0' },
-  activeChip: { backgroundColor: '#007BFF' },
+  activeChip: { backgroundColor: '#2563eb' },
   chipText: { color: '#666', fontWeight: '600' },
   activeChipText: { color: '#fff' },
 
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   
   roleBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   adminBadge: { backgroundColor: '#ff4d4d' },
-  userBadge: { backgroundColor: '#007BFF' },
+  userBadge: { backgroundColor: '#2563eb' },
   roleText: { color: '#fff', fontSize: 12, fontWeight: 'bold', textTransform: 'capitalize' },
   
   actionRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10, gap: 15, borderTopWidth: 1, borderTopColor: '#f0f0f0', paddingTop: 10 },

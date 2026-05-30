@@ -92,7 +92,7 @@ const StudentInbox = ({ navigation }) => {
     );
   };
 
-  if (loading && !refreshing) return <ActivityIndicator size="large" color="#007BFF" style={styles.loader} />;
+  if (loading && !refreshing) return <ActivityIndicator size="large" color="#2563eb" style={styles.loader} />;
 
   return (
     <View style={styles.container}>
@@ -132,7 +132,7 @@ const StudentInbox = ({ navigation }) => {
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#007BFF']} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2563eb']} />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   chatHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 },
   studentName: { fontSize: 16, fontWeight: 'bold', color: '#000' },
   timeText: { fontSize: 12, color: '#888' },
-  houseTitle: { fontSize: 12, color: '#007BFF', marginBottom: 2, fontWeight: '600' },
+  houseTitle: { fontSize: 12, color: '#2563eb', marginBottom: 2, fontWeight: '600' },
   lastMsg: { fontSize: 14, color: '#666' },
 
   loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },

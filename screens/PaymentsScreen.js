@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#007BFF',
+    borderColor: '#2563eb',
     backgroundColor: '#ffffff',
     overflow: 'hidden',
     elevation: 8,
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 5,
   },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10, color: '#007BFF', textAlign: 'center' },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 10, color: '#2563eb', textAlign: 'center' },
   subtitle: { fontSize: 18, color: '#333', textAlign: 'center', marginBottom: 10, fontWeight: 'bold' },
   instruction: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 10, marginTop: 10 },
   paynowBtn: {

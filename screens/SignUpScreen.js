@@ -159,7 +159,7 @@ const SignUpScreen = ({ navigation }) => {
   const renderInput = (field, iconName, placeholder, value, onChangeText, extra = {}) => (
     <>
       <View style={[styles.inputContainer, hasFieldError(field) && styles.inputError]}>
-        <Icon name={iconName} size={18} color={hasFieldError(field) ? '#e53e3e' : '#3182ce'} style={styles.icon} />
+        <Icon name={iconName} size={18} color={hasFieldError(field) ? '#e53e3e' : '#2563eb'} style={styles.icon} />
         <TextInput
           placeholder={placeholder}
           placeholderTextColor="#a0aec0"
@@ -170,7 +170,7 @@ const SignUpScreen = ({ navigation }) => {
         />
         {extra.secureTextEntry !== undefined && (
           <TouchableOpacity onPress={extra.onToggle} style={styles.eyeIconContainer}>
-            <Icon name={extra.visible ? 'eye' : 'eye-slash'} size={18} color="#3182ce" />
+            <Icon name={extra.visible ? 'eye' : 'eye-slash'} size={18} color="#2563eb" />
           </TouchableOpacity>
         )}
         {hasFieldError(field) && <MCIcon name="alert-circle" size={18} color="#e53e3e" />}
@@ -208,7 +208,7 @@ const SignUpScreen = ({ navigation }) => {
 
           {/* Password */}
           <View style={[styles.inputContainer, hasFieldError('password') && styles.inputError]}>
-            <Icon name="lock" size={18} color={hasFieldError('password') ? '#e53e3e' : '#3182ce'} style={styles.icon} />
+            <Icon name="lock" size={18} color={hasFieldError('password') ? '#e53e3e' : '#2563eb'} style={styles.icon} />
             <TextInput
               placeholder="Password"
               placeholderTextColor="#a0aec0"
@@ -219,7 +219,7 @@ const SignUpScreen = ({ navigation }) => {
               autoCapitalize="none"
             />
             <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} style={styles.eyeIconContainer}>
-              <Icon name={passwordVisible ? 'eye' : 'eye-slash'} size={18} color="#3182ce" />
+              <Icon name={passwordVisible ? 'eye' : 'eye-slash'} size={18} color="#2563eb" />
             </TouchableOpacity>
             {hasFieldError('password') && <MCIcon name="alert-circle" size={18} color="#e53e3e" />}
           </View>
@@ -237,7 +237,7 @@ const SignUpScreen = ({ navigation }) => {
 
           {/* Confirm Password */}
           <View style={[styles.inputContainer, hasFieldError('confpassword') && styles.inputError]}>
-            <Icon name="lock" size={18} color={hasFieldError('confpassword') ? '#e53e3e' : '#3182ce'} style={styles.icon} />
+            <Icon name="lock" size={18} color={hasFieldError('confpassword') ? '#e53e3e' : '#2563eb'} style={styles.icon} />
             <TextInput
               placeholder="Confirm Password"
               placeholderTextColor="#a0aec0"
@@ -248,7 +248,7 @@ const SignUpScreen = ({ navigation }) => {
               autoCapitalize="none"
             />
             <TouchableOpacity onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)} style={styles.eyeIconContainer}>
-              <Icon name={confirmPasswordVisible ? 'eye' : 'eye-slash'} size={18} color="#3182ce" />
+              <Icon name={confirmPasswordVisible ? 'eye' : 'eye-slash'} size={18} color="#2563eb" />
             </TouchableOpacity>
             {hasFieldError('confpassword') && <MCIcon name="alert-circle" size={18} color="#e53e3e" />}
           </View>
@@ -256,7 +256,7 @@ const SignUpScreen = ({ navigation }) => {
 
           {/* Role Picker */}
           <View style={[styles.inputContainer, hasFieldError('role') && styles.inputError]}>
-            <MCIcon name="account-circle-outline" size={20} color={hasFieldError('role') ? '#e53e3e' : '#3182ce'} style={styles.icon} />
+            <MCIcon name="account-circle-outline" size={20} color={hasFieldError('role') ? '#e53e3e' : '#2563eb'} style={styles.icon} />
             <Text style={styles.roleText}>Role</Text>
             <RNPickerSelect
               placeholder={{ label: 'Select your role...', value: '' }}
@@ -282,7 +282,7 @@ const SignUpScreen = ({ navigation }) => {
           {/* Terms Checkbox */}
           <View style={[styles.checkboxContainer, hasFieldError('terms') && { borderColor: '#e53e3e', borderWidth: 1, borderRadius: 8, padding: 8, backgroundColor: '#fff5f5' }]}>
             <TouchableOpacity style={styles.checkbox} onPress={() => { setIsAgreed(!isAgreed); clearField('terms'); }}>
-              <MCIcon name={isAgreed ? "checkbox-marked" : "checkbox-blank-outline"} size={22} color={isAgreed ? '#3182ce' : (hasFieldError('terms') ? '#e53e3e' : '#a0aec0')} />
+              <MCIcon name={isAgreed ? "checkbox-marked" : "checkbox-blank-outline"} size={22} color={isAgreed ? '#2563eb' : (hasFieldError('terms') ? '#e53e3e' : '#a0aec0')} />
             </TouchableOpacity>
             <Text style={styles.checkboxText}>I have read and understood the{' '}
               <Text style={styles.link} onPress={() => navigation.navigate('TermsAndConditions')}>Terms and Conditions</Text>
@@ -355,19 +355,19 @@ const styles = StyleSheet.create({
   checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 4 },
   checkbox: { marginRight: 8 },
   checkboxText: { flex: 1, fontSize: 13, color: '#4a5568', lineHeight: 18 },
-  link: { color: '#3182ce', fontWeight: '600', textDecorationLine: 'underline' },
+  link: { color: '#2563eb', fontWeight: '600', textDecorationLine: 'underline' },
 
   // Button
   button: {
-    backgroundColor: '#3182ce', borderRadius: 14, height: 52, justifyContent: 'center', alignItems: 'center',
-    marginTop: 6, elevation: 3, shadowColor: '#3182ce', shadowOpacity: 0.3, shadowRadius: 8,
+    backgroundColor: '#2563eb', borderRadius: 14, height: 52, justifyContent: 'center', alignItems: 'center',
+    marginTop: 6, elevation: 3, shadowColor: '#2563eb', shadowOpacity: 0.3, shadowRadius: 8,
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#ffffff', fontWeight: '700', fontSize: 17 },
 
   loginLink: { marginTop: 18, alignItems: 'center', padding: 8 },
   loginText: { color: '#718096', fontSize: 14 },
-  loginHighlight: { color: '#3182ce', fontWeight: '700' },
+  loginHighlight: { color: '#2563eb', fontWeight: '700' },
 
   // Success Modal
   modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 22, fontWeight: '800', color: '#1a365d', marginBottom: 8 },
   modalSub: { fontSize: 14, color: '#718096', textAlign: 'center', marginBottom: 20, lineHeight: 20 },
   modalButton: {
-    backgroundColor: '#3182ce', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 40, alignItems: 'center',
+    backgroundColor: '#2563eb', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 40, alignItems: 'center',
   },
   modalButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });

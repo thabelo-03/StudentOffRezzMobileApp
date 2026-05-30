@@ -49,7 +49,7 @@ const SettingsScreen = ({ navigation }) => {
     navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
   };
 
-  if (loading) return <ActivityIndicator size="large" color="#3182ce" style={{ flex: 1 }} />;
+  if (loading) return <ActivityIndicator size="large" color="#2563eb" style={{ flex: 1 }} />;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ padding: 20 }}>
@@ -77,12 +77,12 @@ const SettingsScreen = ({ navigation }) => {
       <Text style={styles.section}>More</Text>
       <View style={styles.card}>
         <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('TermsAndConditions')}>
-          <Icon name="file-document-outline" size={22} color="#3182ce" />
+          <Icon name="file-document-outline" size={22} color="#2563eb" />
           <Text style={styles.linkText}>Terms & Conditions</Text>
           <Icon name="chevron-right" size={22} color="#A0AEC0" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('Help')}>
-          <Icon name="help-circle-outline" size={22} color="#3182ce" />
+          <Icon name="help-circle-outline" size={22} color="#2563eb" />
           <Text style={styles.linkText}>Help & Support</Text>
           <Icon name="chevron-right" size={22} color="#A0AEC0" />
         </TouchableOpacity>
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, fontWeight: '600', color: '#4A5568', marginBottom: 6, marginTop: 8 },
   input: { backgroundColor: '#F7FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 10, padding: 12, fontSize: 16, color: '#2D3748' },
   readonly: { fontSize: 16, color: '#718096', paddingVertical: 4 },
-  saveBtn: { backgroundColor: '#3182ce', borderRadius: 10, padding: 14, alignItems: 'center', marginTop: 18 },
+  saveBtn: { backgroundColor: '#2563eb', borderRadius: 10, padding: 14, alignItems: 'center', marginTop: 18 },
   saveText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   linkRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 12, borderBottomWidth: 1, borderBottomColor: '#EDF2F7' },
   linkText: { flex: 1, fontSize: 16, color: '#2D3748' },

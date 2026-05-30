@@ -98,7 +98,7 @@ const LandlordInbox = ({ navigation }) => {
     );
   };
 
-  if (loading && !refreshing) return <ActivityIndicator size="large" color="#007BFF" style={styles.loader} />;
+  if (loading && !refreshing) return <ActivityIndicator size="large" color="#2563eb" style={styles.loader} />;
 
   return (
     <View style={styles.container}>
@@ -115,7 +115,7 @@ const LandlordInbox = ({ navigation }) => {
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#007BFF']} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2563eb']} />
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', flexDirection: 'row' },
   sidebarContainer: { width: '75%', backgroundColor: '#FFF', height: '100%', paddingTop: 50, elevation: 5 },
   sidebarHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 10, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 15 },
-  sidebarTitle: { fontSize: 22, fontWeight: 'bold', color: '#007BFF' },
+  sidebarTitle: { fontSize: 22, fontWeight: 'bold', color: '#2563eb' },
   sidebarList: { paddingBottom: 20 },
   closeBtn: { padding: 5 },
 });

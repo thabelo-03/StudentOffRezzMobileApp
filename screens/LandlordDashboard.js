@@ -242,7 +242,7 @@ const LandlordDashboard = ({ navigation }) => {
               <Text style={styles.statValue}>{stats.pending}</Text>
               <Text style={styles.statLabel}>Pending</Text>
            </View>
-           <View style={[styles.statBox, {borderBottomColor: '#2196F3'}]}>
+           <View style={[styles.statBox, {borderBottomColor: '#2563eb'}]}>
               <Text style={styles.statValue}>{stats.active}</Text>
               <Text style={styles.statLabel}>Properties</Text>
            </View>
@@ -297,12 +297,12 @@ const LandlordDashboard = ({ navigation }) => {
         <View style={styles.dateFilterBox}>
           <View style={styles.dateFilterRow}>
             <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowFromPicker(true)}>
-              <Icon name="calendar-start" size={16} color="#3182ce" />
+              <Icon name="calendar-start" size={16} color="#2563eb" />
               <Text style={styles.datePickerText}>{dateLabel(reportFromDate)}</Text>
             </TouchableOpacity>
             <Text style={{ color: '#999', marginHorizontal: 6 }}>to</Text>
             <TouchableOpacity style={styles.datePickerBtn} onPress={() => setShowToPicker(true)}>
-              <Icon name="calendar-end" size={16} color="#3182ce" />
+              <Icon name="calendar-end" size={16} color="#2563eb" />
               <Text style={styles.datePickerText}>{dateLabel(reportToDate)}</Text>
             </TouchableOpacity>
           </View>
@@ -329,7 +329,7 @@ const LandlordDashboard = ({ navigation }) => {
 
         <View style={styles.reportList}>
           {[
-            { id: 'prop_pdf', title: 'My Properties', subtitle: 'All listings with details', icon: 'home-city', color: '#3182ce', format: 'PDF',
+            { id: 'prop_pdf', title: 'My Properties', subtitle: 'All listings with details', icon: 'home-city', color: '#2563eb', format: 'PDF',
               action: async () => { const r = await api.get('/listings/mine'); const dr = dateLabel(reportFromDate) + ' - ' + dateLabel(reportToDate); const html = buildPropertiesHTML(filterByDate(r.data || []), dr); setPreviewHTML(html); setPreviewFilename('Properties_Report'); setPreviewVisible(true); } },
             { id: 'prop_csv', title: 'My Properties', subtitle: 'Export as spreadsheet', icon: 'file-excel', color: '#217346', format: 'Excel',
               action: async () => { const r = await api.get('/listings/mine'); await generatePropertiesCSV(filterByDate(r.data || [])); } },
@@ -509,10 +509,10 @@ const styles = StyleSheet.create({
   dateFilterBox: { backgroundColor: '#FFF', borderRadius: 12, padding: 12, marginBottom: 12, elevation: 1 },
   dateFilterRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   datePickerBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ebf4ff', borderRadius: 8, padding: 10, gap: 6, borderWidth: 1, borderColor: '#bee3f8' },
-  datePickerText: { fontSize: 13, fontWeight: '500', color: '#3182ce' },
+  datePickerText: { fontSize: 13, fontWeight: '500', color: '#2563eb' },
   presetRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 6 },
   presetBtn: { flex: 1, backgroundColor: '#F5F5F5', paddingVertical: 8, borderRadius: 6, alignItems: 'center' },
-  presetBtnActive: { backgroundColor: '#3182ce' },
+  presetBtnActive: { backgroundColor: '#2563eb' },
   presetText: { fontSize: 11, fontWeight: '600', color: '#555' },
   presetTextActive: { color: '#FFF' },
 
@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
   previewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 50, backgroundColor: '#FFF', elevation: 2 },
   previewTitle: { fontSize: 18, fontWeight: '700', color: '#333' },
   previewActions: { flexDirection: 'row', padding: 12, gap: 10, backgroundColor: '#FFF', elevation: 4 },
-  previewBtnPrint: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#3182ce', padding: 14, borderRadius: 10, gap: 8 },
+  previewBtnPrint: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2563eb', padding: 14, borderRadius: 10, gap: 8 },
   previewBtnShare: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#38a169', padding: 14, borderRadius: 10, gap: 8 },
   previewBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
 });

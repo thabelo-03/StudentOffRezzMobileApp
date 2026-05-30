@@ -97,7 +97,7 @@ const ChatDetail = ({ route, navigation }) => {
         </View>
   
         {loading || !currentUserId ? (
-          <ActivityIndicator size="large" color="#007BFF" style={styles.centered} />
+          <ActivityIndicator size="large" color="#2563eb" style={styles.centered} />
         ) : (
           <FlatList
             ref={flatListRef}
@@ -129,16 +129,16 @@ const ChatDetail = ({ route, navigation }) => {
     header: { flexDirection: 'row', alignItems: 'center', padding: 15, paddingTop: 50, backgroundColor: '#FFF', elevation: 4 },
     headerInfo: { marginLeft: 15 },
     headerName: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-    headerSub: { fontSize: 12, color: '#007BFF', fontWeight: '600' },
+    headerSub: { fontSize: 12, color: '#2563eb', fontWeight: '600' },
     list: { padding: 15 },
     bubble: { padding: 12, borderRadius: 12, marginBottom: 10, maxWidth: '75%', elevation: 1, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 1, shadowOffset: { width: 0, height: 1 } },
     studentBubble: { backgroundColor: '#FFF', alignSelf: 'flex-start', borderTopLeftRadius: 0, borderWidth: 0.5, borderColor: '#E0E0E0' },
-    landlordBubble: { backgroundColor: '#007BFF', alignSelf: 'flex-end', borderTopRightRadius: 0 },
+    landlordBubble: { backgroundColor: '#2563eb', alignSelf: 'flex-end', borderTopRightRadius: 0 },
     messageText: { fontSize: 16 },
     time: { fontSize: 10, marginTop: 4, alignSelf: 'flex-end' },
     inputArea: { flexDirection: 'row', padding: 10, backgroundColor: '#FFF', alignItems: 'center', elevation: 5 },
     input: { flex: 1, backgroundColor: '#F0F0F0', borderRadius: 25, paddingHorizontal: 20, height: 45, fontSize: 16 },
-    sendBtn: { backgroundColor: '#007BFF', width: 45, height: 45, borderRadius: 23, justifyContent: 'center', alignItems: 'center', marginLeft: 10, elevation: 2 },
+    sendBtn: { backgroundColor: '#2563eb', width: 45, height: 45, borderRadius: 23, justifyContent: 'center', alignItems: 'center', marginLeft: 10, elevation: 2 },
     centered: { flex: 1, justifyContent: 'center' }
   });
   

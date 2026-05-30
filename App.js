@@ -43,7 +43,7 @@ function StudentTabs() {
     <Tab.Navigator 
       initialRouteName="Home"
       screenOptions={{
-        tabBarActiveTintColor: '#3182ce',
+        tabBarActiveTintColor: '#2563eb',
         headerShown: false,
       }}
     >
@@ -81,7 +81,7 @@ function LandlordTabs() {
     <Tab.Navigator 
       initialRouteName="Dashboard"
       screenOptions={{
-        tabBarActiveTintColor: '#3182ce',
+        tabBarActiveTintColor: '#2563eb',
         headerShown: false,
       }}
     >
@@ -150,7 +150,7 @@ export default function App() {
           component={ChatDetail} 
           options={({ route }) => ({ 
             title: route.params?.studentName || 'Chat',
-            headerStyle: { backgroundColor: '#007BFF' },
+            headerStyle: { backgroundColor: '#2563eb' },
             headerTintColor: '#fff',
           })} 
         />

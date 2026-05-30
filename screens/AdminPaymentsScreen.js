@@ -52,7 +52,7 @@ const AdminPaymentsScreen = () => {
     <View style={styles.container}>
       <Text style={styles.header}>Payment Transactions</Text>
       {loading && !refreshing ? (
-        <ActivityIndicator size="large" color="#007BFF" style={styles.loader} />
+        <ActivityIndicator size="large" color="#2563eb" style={styles.loader} />
       ) : (
         <FlatList
           data={payments}

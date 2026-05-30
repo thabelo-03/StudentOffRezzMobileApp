@@ -53,7 +53,7 @@ const NotificationsScreen = ({ navigation }) => {
     if (item.type === 'message') navigation.navigate('Inbox');
   };
 
-  if (loading && !refreshing) return <ActivityIndicator size="large" color="#3182ce" style={styles.loader} />;
+  if (loading && !refreshing) return <ActivityIndicator size="large" color="#2563eb" style={styles.loader} />;
 
   return (
     <View style={styles.container}>
@@ -65,7 +65,7 @@ const NotificationsScreen = ({ navigation }) => {
         renderItem={({ item }) => (
           <TouchableOpacity style={[styles.row, !item.isRead && styles.unread]} onPress={() => handlePress(item)}>
             <View style={styles.iconWrap}>
-              <Icon name={ICONS[item.type] || 'bell-outline'} size={22} color="#3182ce" />
+              <Icon name={ICONS[item.type] || 'bell-outline'} size={22} color="#2563eb" />
             </View>
             <View style={styles.content}>
               <Text style={styles.message}>{item.message}</Text>
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   message: { fontSize: 15, color: '#2D3748', lineHeight: 20 },
   time: { fontSize: 12, color: '#A0AEC0', marginTop: 3 },
-  dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: '#3182ce', marginLeft: 8 },
+  dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: '#2563eb', marginLeft: 8 },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyText: { color: '#A0AEC0', fontSize: 16, marginTop: 12 },
 });

@@ -79,7 +79,7 @@ const AdminListingsScreen = () => {
     );
   };
 
-  if (loading) return <ActivityIndicator size="large" color="#007BFF" style={styles.centered} />;
+  if (loading) return <ActivityIndicator size="large" color="#2563eb" style={styles.centered} />;
 
   return (
     <View style={styles.container}>

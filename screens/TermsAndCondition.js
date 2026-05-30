@@ -97,7 +97,7 @@ const TermsAndConditions = ({ navigation }) => {
       <ScrollView style={styles.scrollView} contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Intro Card */}
         <View style={styles.introCard}>
-          <MCIcon name="information-outline" size={20} color="#3182ce" />
+          <MCIcon name="information-outline" size={20} color="#2563eb" />
           <Text style={styles.introText}>
             Please read these terms carefully before using ThabStay. By creating an account, you acknowledge and agree to these terms.
           </Text>
@@ -110,7 +110,7 @@ const TermsAndConditions = ({ navigation }) => {
           <View key={i} style={styles.section}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionIconBox}>
-                <MCIcon name={section.icon} size={20} color="#3182ce" />
+                <MCIcon name={section.icon} size={20} color="#2563eb" />
               </View>
               <Text style={styles.sectionTitle}>{section.title}</Text>
             </View>
@@ -135,7 +135,7 @@ const TermsAndConditions = ({ navigation }) => {
 
         {/* Contact Section */}
         <View style={styles.contactCard}>
-          <MCIcon name="headset" size={28} color="#3182ce" />
+          <MCIcon name="headset" size={28} color="#2563eb" />
           <Text style={styles.contactTitle}>Need Help?</Text>
           <Text style={styles.contactText}>If you have questions about these terms, contact us:</Text>
           <View style={styles.contactRow}>
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   introCard: {
     flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#ebf8ff',
     borderRadius: 12, padding: 14, marginBottom: 12, gap: 10,
-    borderLeftWidth: 4, borderLeftColor: '#3182ce',
+    borderLeftWidth: 4, borderLeftColor: '#2563eb',
   },
   introText: { flex: 1, fontSize: 13, color: '#2b6cb0', lineHeight: 19 },
 
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
 
   defItem: {
     backgroundColor: '#f7fafc', borderRadius: 8, padding: 12, marginBottom: 8,
-    borderLeftWidth: 3, borderLeftColor: '#3182ce',
+    borderLeftWidth: 3, borderLeftColor: '#2563eb',
   },
   defLabel: { fontSize: 14, fontWeight: '700', color: '#1a365d', marginBottom: 3 },
   defDesc: { fontSize: 13, color: '#718096', lineHeight: 19 },

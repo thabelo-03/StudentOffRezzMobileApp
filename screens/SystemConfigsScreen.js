@@ -34,7 +34,7 @@ const SystemConfigsScreen = () => {
     }
   };
 
-  if (loading) return <ActivityIndicator size="large" color="#007BFF" style={styles.centered} />;
+  if (loading) return <ActivityIndicator size="large" color="#2563eb" style={styles.centered} />;
 
   return (
     <View style={styles.container}>
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   inputGroup: { marginBottom: 30 },
   input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, marginTop: 10, fontSize: 16 },
   
-  saveBtn: { backgroundColor: '#007BFF', padding: 15, borderRadius: 10, alignItems: 'center' },
+  saveBtn: { backgroundColor: '#2563eb', padding: 15, borderRadius: 10, alignItems: 'center' },
   saveText: { color: '#fff', fontWeight: 'bold', fontSize: 16 }
 });
 

@@ -80,11 +80,11 @@ const AdminVerificationScreen = () => {
       <Text style={{ marginBottom: 8, color: '#333' }}>National ID: {item.nationalIdNumber || 'N/A'}</Text>
       <View style={styles.docContainer}>
         <TouchableOpacity style={styles.docBtn} onPress={() => openLink(item.nationalIdUrl)}>
-          <Icon name="card-account-details-outline" size={20} color="#007BFF" />
+          <Icon name="card-account-details-outline" size={20} color="#2563eb" />
           <Text style={styles.docText}>ID Document</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.docBtn} onPress={() => openLink(item.proofOfAddressUrl)}>
-          <Icon name="file-document-outline" size={20} color="#007BFF" />
+          <Icon name="file-document-outline" size={20} color="#2563eb" />
           <Text style={styles.docText}>Proof of Address</Text>
         </TouchableOpacity>
       </View>
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   sectionLabel: { fontWeight: '600', marginTop: 5, marginBottom: 5 },
   docContainer: { flexDirection: 'row', gap: 10, marginBottom: 15 },
   docBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#e3f2fd', padding: 8, borderRadius: 5 },
-  docText: { marginLeft: 5, color: '#007BFF' },
+  docText: { marginLeft: 5, color: '#2563eb' },
   actionRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
   btn: { flexDirection: 'row', paddingVertical: 8, paddingHorizontal: 15, borderRadius: 5, alignItems: 'center' },
   rejectBtn: { backgroundColor: '#D32F2F' },

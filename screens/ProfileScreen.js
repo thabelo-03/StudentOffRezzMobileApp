@@ -57,22 +57,22 @@ const ProfileScreen = ({ navigation }) => {
 
           <View style={styles.menuCard}>
             <TouchableOpacity style={styles.menuRow} onPress={() => navigation.navigate('Settings')}>
-              <Icon name="settings" size={22} color="#3182ce" />
+              <Icon name="settings" size={22} color="#2563eb" />
               <Text style={styles.menuRowText}>Settings</Text>
               <Icon name="chevron-right" size={22} color="#A0AEC0" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.menuRow} onPress={() => navigation.navigate('Notifications')}>
-              <Icon name="notifications-none" size={22} color="#3182ce" />
+              <Icon name="notifications-none" size={22} color="#2563eb" />
               <Text style={styles.menuRowText}>Notifications</Text>
               <Icon name="chevron-right" size={22} color="#A0AEC0" />
             </TouchableOpacity>
             <TouchableOpacity style={styles.menuRow} onPress={() => navigation.navigate('Help')}>
-              <Icon name="help-outline" size={22} color="#3182ce" />
+              <Icon name="help-outline" size={22} color="#2563eb" />
               <Text style={styles.menuRowText}>Help & Support</Text>
               <Icon name="chevron-right" size={22} color="#A0AEC0" />
             </TouchableOpacity>
             <TouchableOpacity style={[styles.menuRow, { borderBottomWidth: 0 }]} onPress={() => navigation.navigate('TermsAndConditions')}>
-              <Icon name="description" size={22} color="#3182ce" />
+              <Icon name="description" size={22} color="#2563eb" />
               <Text style={styles.menuRowText}>Terms & Conditions</Text>
               <Icon name="chevron-right" size={22} color="#A0AEC0" />
             </TouchableOpacity>
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   },
   userUsername: {
     fontSize: 14,
-    color: '#007BFF',
+    color: '#2563eb',
     marginBottom: 4,
   },
   userEmail: {

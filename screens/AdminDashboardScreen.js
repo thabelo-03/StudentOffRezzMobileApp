@@ -73,7 +73,7 @@ const AdminDashboardScreen = ({ navigation }) => {
         <View style={styles.barRow}>
           <Text style={styles.barLabel}>Landlords</Text>
           <View style={styles.barTrack}>
-            <View style={[styles.barFill, { width: getWidth(stats.landlords), backgroundColor: '#2196F3' }]} />
+            <View style={[styles.barFill, { width: getWidth(stats.landlords), backgroundColor: '#2563eb' }]} />
           </View>
           <Text style={styles.barValue}>{stats.landlords}</Text>
         </View>

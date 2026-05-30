@@ -55,7 +55,7 @@ const LandlordVerificationScreen = ({ navigation, route }) => {
 
   const DocButton = ({ doc, onPress, label }) => (
     <TouchableOpacity style={[styles.docBtn, doc && styles.docBtnDone]} onPress={onPress}>
-      <Icon name={doc ? 'check-circle' : 'upload'} size={20} color={doc ? '#28a745' : '#007BFF'} />
+      <Icon name={doc ? 'check-circle' : 'upload'} size={20} color={doc ? '#28a745' : '#2563eb'} />
       <Text style={[styles.docBtnText, doc && { color: '#28a745' }]} numberOfLines={1}>
         {doc ? doc.name : label}
       </Text>
@@ -113,14 +113,14 @@ const styles = StyleSheet.create({
   inputGroup: { marginBottom: 20 },
   label: { fontSize: 14, fontWeight: '600', marginBottom: 5, color: '#333' },
   input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#f9f9f9' },
-  docBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#007BFF', borderStyle: 'dashed', borderRadius: 8, padding: 14, backgroundColor: '#f5f9ff' },
+  docBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#2563eb', borderStyle: 'dashed', borderRadius: 8, padding: 14, backgroundColor: '#f5f9ff' },
   docBtnDone: { borderColor: '#28a745', borderStyle: 'solid', backgroundColor: '#f3fbf5' },
-  docBtnText: { color: '#007BFF', fontWeight: '600', flex: 1 },
-  button: { backgroundColor: '#007BFF', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10 },
+  docBtnText: { color: '#2563eb', fontWeight: '600', flex: 1 },
+  button: { backgroundColor: '#2563eb', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10 },
   disabledButton: { backgroundColor: '#a0cfff' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   linkButton: { marginTop: 20, alignItems: 'center' },
-  linkText: { color: '#007BFF', fontSize: 14 },
+  linkText: { color: '#2563eb', fontSize: 14 },
   
   section: { marginBottom: 15, padding: 15, backgroundColor: '#f0f0f0', borderRadius: 10 },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#444' },

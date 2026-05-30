@@ -311,7 +311,7 @@ const MyListings = () => {
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.editBtn} onPress={() => handleEdit(house)}>
-              <Icon name="edit" color="#007BFF" /><Text style={styles.editBtnText}> Edit</Text>
+              <Icon name="edit" color="#2563eb" /><Text style={styles.editBtnText}> Edit</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.deleteBtn} onPress={() => removeHouse(house.id)}>
               <Icon name="trash" color="red" /><Text style={styles.deleteBtnText}> Delete</Text>
@@ -327,11 +327,11 @@ const MyListings = () => {
       <View style={styles.headerRow}>
         <Text style={styles.header}>My Listings</Text>
         <TouchableOpacity onPress={() => setSettingsVisible(true)}>
-          <Icon name="user-circle" size={30} color="#007BFF" />
+          <Icon name="user-circle" size={30} color="#2563eb" />
         </TouchableOpacity>
       </View>
 
-      {loading && <ActivityIndicator size="large" color="#007BFF" />}
+      {loading && <ActivityIndicator size="large" color="#2563eb" />}
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {houses.map(renderHouseItem)}
@@ -488,23 +488,23 @@ const styles = StyleSheet.create({
   location: { color: '#666', marginTop: 5 },
   buttonContainer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 20, marginTop: 10 },
   editBtn: { flexDirection: 'row', alignItems: 'center' },
-  editBtnText: { color: '#007BFF', marginLeft: 5, fontWeight: 'bold' },
+  editBtnText: { color: '#2563eb', marginLeft: 5, fontWeight: 'bold' },
   deleteBtn: { flexDirection: 'row', alignItems: 'center' },
   deleteBtnText: { color: 'red', marginLeft: 5, fontWeight: 'bold' },
-  fab: { position: 'absolute', bottom: 30, right: 30, backgroundColor: '#007BFF', width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', elevation: 5 },
+  fab: { position: 'absolute', bottom: 30, right: 30, backgroundColor: '#2563eb', width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', elevation: 5 },
   modalContent: { padding: 20 },
   modalTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
   label: { fontSize: 16, fontWeight: 'bold', marginBottom: 5, color: '#444' },
   input: { backgroundColor: '#f1f1f1', borderRadius: 10, padding: 12, marginBottom: 15 },
   policyRow: { flexDirection: 'row', gap: 10, marginBottom: 15 },
   policyBtn: { flex: 1, padding: 10, borderRadius: 10, backgroundColor: '#eee', alignItems: 'center' },
-  policyBtnActive: { backgroundColor: '#007BFF' },
+  policyBtnActive: { backgroundColor: '#2563eb' },
   
   dropdownBtn: { backgroundColor: '#f1f1f1', padding: 12, borderRadius: 10, marginBottom: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   dropdownBtnText: { color: '#333', fontSize: 16 },
   amenitiesContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 15 },
   amenityChip: { backgroundColor: '#e9ecef', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20 },
-  amenityChipSelected: { backgroundColor: '#007BFF' },
+  amenityChipSelected: { backgroundColor: '#2563eb' },
   amenityText: { color: '#333', fontSize: 14 },
   amenityTextSelected: { color: '#fff', fontWeight: 'bold' },
 

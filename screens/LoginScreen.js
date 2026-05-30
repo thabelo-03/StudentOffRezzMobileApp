@@ -200,7 +200,7 @@ export default function LoginScreen() {
 
         {/* Email Input */}
         <View style={[styles.inputContainer, emailError ? styles.inputError : null]}>
-          <Icon name="envelope" size={18} color={emailError ? '#e53e3e' : '#3182ce'} style={styles.iconmail} />
+          <Icon name="envelope" size={18} color={emailError ? '#e53e3e' : '#2563eb'} style={styles.iconmail} />
           <TextInput
             placeholder="Email"
             placeholderTextColor="#a0aec0"
@@ -216,7 +216,7 @@ export default function LoginScreen() {
 
         {/* Password Input */}
         <View style={[styles.passwordContainer, passwordError ? styles.inputError : null]}>
-          <Icon name="lock" size={20} color={passwordError ? '#e53e3e' : '#3182ce'} style={styles.iconpass} />
+          <Icon name="lock" size={20} color={passwordError ? '#e53e3e' : '#2563eb'} style={styles.iconpass} />
           <TextInput
             placeholder="Password"
             placeholderTextColor="#a0aec0"
@@ -226,7 +226,7 @@ export default function LoginScreen() {
             onChangeText={(t) => { setPassword(t); if (passwordError) setPasswordError(''); if (errorMsg) clearErrors(); }}
           />
           <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)} style={styles.eyeIconContainer}>
-            <Icon name={passwordVisible ? 'eye' : 'eye-slash'} size={18} color="#3182ce" />
+            <Icon name={passwordVisible ? 'eye' : 'eye-slash'} size={18} color="#2563eb" />
           </TouchableOpacity>
           {passwordError ? <MCIcon name="alert-circle" size={18} color="#e53e3e" style={{ marginLeft: 4 }} /> : null}
         </View>
@@ -295,13 +295,13 @@ const styles = StyleSheet.create({
 
   // Button
   button: { 
-    backgroundColor: '#3182ce', borderRadius: 14, height: 52, 
+    backgroundColor: '#2563eb', borderRadius: 14, height: 52, 
     justifyContent: 'center', alignItems: 'center', width: '100%', marginTop: 6,
-    elevation: 3, shadowColor: '#3182ce', shadowOpacity: 0.3, shadowRadius: 8,
+    elevation: 3, shadowColor: '#2563eb', shadowOpacity: 0.3, shadowRadius: 8,
   },
   buttonText: { color: '#ffffff', fontWeight: '700', fontSize: 17 },
   
   signUpContainer: { marginTop: 18, padding: 8 },
   signUpText: { color: '#718096', fontSize: 14, textAlign: 'center' },
-  signUpHighlight: { color: '#3182ce', fontWeight: '700' },
+  signUpHighlight: { color: '#2563eb', fontWeight: '700' },
 });

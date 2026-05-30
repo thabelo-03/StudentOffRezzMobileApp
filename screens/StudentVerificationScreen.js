@@ -58,7 +58,7 @@ const StudentVerificationScreen = ({ navigation, route }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <Icon name="school" size={60} color="#007BFF" />
+        <Icon name="school" size={60} color="#2563eb" />
         <Text style={styles.title}>Student Verification</Text>
         <Text style={styles.subtitle}>
           Please verify your university registration number to access the platform.
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     marginBottom: 20 
   },
   
-  button: { backgroundColor: '#007BFF', padding: 15, borderRadius: 8, alignItems: 'center' },
+  button: { backgroundColor: '#2563eb', padding: 15, borderRadius: 8, alignItems: 'center' },
   btnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   
   logoutBtn: { marginTop: 30, alignItems: 'center' },

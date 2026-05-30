@@ -10,7 +10,7 @@ import {
 } from '../services/reportService';
 
 const REPORT_TYPES = [
-  { id: 'overview', title: 'Platform Overview', subtitle: 'Users, listings & location breakdown', icon: 'chart-bar', color: '#3182ce', format: 'PDF' },
+  { id: 'overview', title: 'Platform Overview', subtitle: 'Users, listings & location breakdown', icon: 'chart-bar', color: '#2563eb', format: 'PDF' },
   { id: 'payments_pdf', title: 'All Payments (PDF)', subtitle: 'Payment transactions with totals', icon: 'cash-multiple', color: '#38a169', format: 'PDF' },
   { id: 'payments_csv', title: 'All Payments (Excel)', subtitle: 'Export payments as spreadsheet', icon: 'file-excel', color: '#217346', format: 'CSV' },
   { id: 'users_pdf', title: 'User Report (PDF)', subtitle: 'All registered users & roles', icon: 'account-group', color: '#dd6b20', format: 'PDF' },
@@ -90,12 +90,12 @@ const AdminReportGenerator = () => {
         <Text style={styles.dateSectionTitle}>Date Range</Text>
         <View style={styles.dateRow}>
           <TouchableOpacity style={styles.dateBtn} onPress={() => setShowFromPicker(true)}>
-            <Icon name="calendar-start" size={16} color="#3182ce" />
+            <Icon name="calendar-start" size={16} color="#2563eb" />
             <Text style={styles.dateBtnText}>{dateLabel(fromDate)}</Text>
           </TouchableOpacity>
           <Text style={styles.dateSeparator}>to</Text>
           <TouchableOpacity style={styles.dateBtn} onPress={() => setShowToPicker(true)}>
-            <Icon name="calendar-end" size={16} color="#3182ce" />
+            <Icon name="calendar-end" size={16} color="#2563eb" />
             <Text style={styles.dateBtnText}>{dateLabel(toDate)}</Text>
           </TouchableOpacity>
         </View>
@@ -202,11 +202,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#ebf4ff', borderRadius: 10, padding: 12, gap: 8,
     borderWidth: 1, borderColor: '#bee3f8',
   },
-  dateBtnText: { fontSize: 14, fontWeight: '500', color: '#3182ce' },
+  dateBtnText: { fontSize: 14, fontWeight: '500', color: '#2563eb' },
   dateSeparator: { marginHorizontal: 10, color: '#999', fontSize: 14 },
   presetRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, gap: 8 },
   presetBtn: { flex: 1, backgroundColor: '#F5F5F5', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
-  presetBtnActive: { backgroundColor: '#3182ce' },
+  presetBtnActive: { backgroundColor: '#2563eb' },
   presetText: { fontSize: 12, fontWeight: '600', color: '#555' },
   presetTextActive: { color: '#FFF' },
 
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   previewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 50, backgroundColor: '#FFF', elevation: 2 },
   previewTitle: { fontSize: 18, fontWeight: '700', color: '#333' },
   previewActions: { flexDirection: 'row', padding: 12, gap: 10, backgroundColor: '#FFF', elevation: 4 },
-  previewBtnPrint: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#3182ce', padding: 14, borderRadius: 10, gap: 8 },
+  previewBtnPrint: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2563eb', padding: 14, borderRadius: 10, gap: 8 },
   previewBtnShare: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#38a169', padding: 14, borderRadius: 10, gap: 8 },
   previewBtnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
 });

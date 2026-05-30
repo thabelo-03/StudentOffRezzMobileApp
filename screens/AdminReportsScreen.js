@@ -39,7 +39,7 @@ const AdminReportsScreen = () => {
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.iconContainer}>
-              <Icon name={item.type === 'Scam' ? 'alert-decagram' : 'alert-circle-outline'} size={24} color={item.type === 'Scam' ? '#D32F2F' : '#007BFF'} />
+              <Icon name={item.type === 'Scam' ? 'alert-decagram' : 'alert-circle-outline'} size={24} color={item.type === 'Scam' ? '#D32F2F' : '#2563eb'} />
             </View>
             <View style={styles.content}>
               <Text style={styles.title}>{item.type || 'Issue'} Report</Text>
