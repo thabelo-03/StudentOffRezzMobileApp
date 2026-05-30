@@ -4,7 +4,6 @@ import {
   TouchableOpacity, Alert, Modal, TextInput, Button, ActivityIndicator
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -51,7 +50,10 @@ const MyListings = () => {
   // Updated State to match Student-side Schema
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
+  const [location, setLocation] = useState(''); // city / area (address.city)
+  const [street, setStreet] = useState('');     // address.street
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [totalRooms, setTotalRooms] = useState('');
   const [price, setPrice] = useState('');
   const [availableSpots, setAvailableSpots] = useState('');
   const [genderPolicy, setGenderPolicy] = useState('Mixed');
@@ -157,128 +159,74 @@ const MyListings = () => {
     }
   };
 
-  const convertImagesToBase64 = async () => {
-    const processedUrls = [];
+  // Compress newly-picked local images and return RN file objects for FormData.
+  // Existing server images (http URLs) are skipped — the backend keeps them when
+  // no new files are uploaded on edit.
+  const prepareImageFiles = async () => {
+    const files = [];
     for (const uri of imageUrls) {
+      if (uri.startsWith('http') || uri.startsWith('data:')) continue; // already on server
       try {
-        let sourceUri = uri;
-
-        // For existing http URLs, just keep them (they're already on server)
-        if (uri.startsWith('http')) {
-          processedUrls.push(uri);
-          console.log(`Keeping existing URL: ${uri.substring(0, 50)}...`);
-          continue;
-        }
-
-        // For data: URIs (previously loaded base64), keep as-is
-        if (uri.startsWith('data:')) {
-          processedUrls.push(uri);
-          console.log(`Keeping existing data URI (${(uri.length / 1024).toFixed(1)} KB)`);
-          continue;
-        }
-
-        // Compress local images with balanced quality
-        console.log(`Compressing image: ${uri.substring(uri.length - 30)}`);
         const manipulated = await ImageManipulator.manipulateAsync(
-          sourceUri,
-          [{ resize: { width: 600 } }],
-          { compress: 0.4, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+          uri,
+          [{ resize: { width: 1000 } }],
+          { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
         );
-        
-        if (manipulated.base64) {
-          const sizeKB = (manipulated.base64.length / 1024).toFixed(1);
-          console.log(`✅ Compressed to ~${sizeKB} KB`);
-          processedUrls.push(`data:image/jpeg;base64,${manipulated.base64}`);
-        } else {
-          // Fallback: read the compressed file
-          const base64 = await FileSystem.readAsStringAsync(manipulated.uri, { encoding: FileSystem.EncodingType.Base64 });
-          console.log(`✅ Fallback compressed to ~${(base64.length / 1024).toFixed(1)} KB`);
-          processedUrls.push(`data:image/jpeg;base64,${base64}`);
-        }
+        files.push({
+          uri: manipulated.uri,
+          name: `listing-${Date.now()}-${files.length}.jpg`,
+          type: 'image/jpeg',
+        });
       } catch (error) {
-        console.log("❌ Image compression error:", error.message || error);
-        // Last resort: try reading original at lowest quality
-        try {
-          const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-          if (base64.length < 200000) { // Only include if under ~200KB
-            processedUrls.push(`data:image/jpeg;base64,${base64}`);
-            console.log(`⚠️ Used uncompressed (${(base64.length / 1024).toFixed(1)} KB)`);
-          } else {
-            console.log(`⚠️ Skipped - too large (${(base64.length / 1024).toFixed(1)} KB)`);
-          }
-        } catch (e) {
-          console.log("❌ Could not read image at all:", e.message);
-        }
+        console.log("Image compression error:", error.message || error);
       }
     }
-    return processedUrls;
+    return files;
   };
 
   const handleSubmit = async () => {
-    if (!title || !price || imageUrls.length === 0) {
-      Alert.alert('Error', 'Title, Price, and at least one Image are required.');
+    // Backend requires: title, address {street, city}, price, availableSpots,
+    // phoneNumber, totalRooms. Images required for a NEW listing.
+    const hasExistingImages = imageUrls.some(u => u.startsWith('http'));
+    if (!title || !price || !street || !location || !phoneNumber || !totalRooms) {
+      Alert.alert('Missing Info', 'Title, Street, Location, Price, Phone Number and Total Rooms are required.');
+      return;
+    }
+    if (!editingHouseId && imageUrls.length === 0) {
+      Alert.alert('Photo Required', 'Please add at least one photo.');
       return;
     }
 
     try {
       setLoading(true);
-      console.log("Starting submission...");
-      const finalImageUrls = await convertImagesToBase64();
+      const files = await prepareImageFiles();
 
-      const houseData = {
-        title,
-        description,
-        location,
-        price: Number(price) || 0,
-        availableSpots: Number(availableSpots) || 0,
-        genderPolicy,
-        amenities: amenities,
-        imageUrls: finalImageUrls,
-        createdAt: Date.now(),
-      };
+      const form = new FormData();
+      form.append('title', title);
+      form.append('description', description || '');
+      form.append('address', JSON.stringify({ street, city: location }));
+      form.append('price', String(Number(price) || 0));
+      form.append('availableSpots', String(Number(availableSpots) || 0));
+      form.append('genderPolicy', genderPolicy);
+      form.append('phoneNumber', phoneNumber);
+      form.append('totalRooms', String(Number(totalRooms) || 0));
+      amenities.forEach(a => form.append('amenities', a));
+      files.forEach(f => form.append('images', f));
 
-      const payloadSize = JSON.stringify(houseData).length;
-      const payloadKB = (payloadSize / 1024).toFixed(2);
-      console.log(`Total Payload Size: ${payloadKB} KB`);
+      const config = { headers: { 'Content-Type': 'multipart/form-data' } };
 
-      // Warn if payload is still too large (Render default ~100KB)
-      if (payloadSize > 900000) {
-        Alert.alert(
-          'Images Too Large', 
-          `Total size is ${payloadKB} KB. Please use fewer or smaller images (max 1MB allowed).`
-        );
-        setLoading(false);
-        return;
-      }
-
-      // TODO (PORT — Phase 2 landlord create/edit): the web backend's
-      // POST/PUT /api/listings expects multipart/form-data with real image files
-      // (upload.array('images', 3)), `address` as a JSON string { street, city },
-      // and REQUIRED `phoneNumber` + `totalRooms`. This still sends base64 JSON to
-      // the old `/houses` route and WILL FAIL until rewritten to FormData and the
-      // form gains phoneNumber/totalRooms/street+city fields. See docs/PORTING.md.
       if (editingHouseId) {
-        await api.put(`/houses/${editingHouseId}`, houseData);
+        await api.put(`/listings/${editingHouseId}`, form, config);
         Alert.alert('Success', 'Property updated');
       } else {
-        await api.post('/houses', houseData);
+        await api.post('/listings', form, config);
         Alert.alert('Success', 'Property posted');
       }
       resetForm();
       fetchHouses();
     } catch (error) {
-      console.error("Submit Error:", error);
-      if (error.response) console.log("Server Error Details:", error.response.data);
-      
-      if (error.response && error.response.status === 413) {
-        Alert.alert(
-          'Upload Failed', 
-          'Images are too large for the server. Try:\n\n• Use only 1 image\n• Pick a smaller photo\n• Remove images and re-pick them',
-          [{ text: 'OK' }]
-        );
-      } else {
-        Alert.alert('Error', error.response?.data?.error || 'Failed to save property');
-      }
+      console.error("Submit Error:", error?.response?.data || error.message);
+      Alert.alert('Error', error.response?.data?.error || 'Failed to save property');
     } finally {
       setLoading(false);
     }
@@ -288,6 +236,9 @@ const MyListings = () => {
     setTitle('');
     setDescription('');
     setLocation('');
+    setStreet('');
+    setPhoneNumber('');
+    setTotalRooms('');
     setPrice('');
     setAvailableSpots('');
     setGenderPolicy('Mixed');
@@ -302,12 +253,17 @@ const MyListings = () => {
   const handleEdit = (house) => {
     setTitle(house.title);
     setDescription(house.description);
-    setLocation(house.location);
+    // normalizeListing flattens address into `location`, but spreads the original
+    // doc, so house.address is still available.
+    setLocation(house.address?.city || house.location || '');
+    setStreet(house.address?.street || '');
+    setPhoneNumber(house.phoneNumber || '');
+    setTotalRooms(house.totalRooms?.toString() || '');
     setPrice(house.price.toString());
     setAvailableSpots(house.availableSpots?.toString() || '');
     setGenderPolicy(house.genderPolicy || 'Mixed');
     setAmenities(house.amenities || []);
-    
+
     const images = house.imageUrls || house.images || [];
     const processedImages = images.map(img => 
       (img.startsWith('http') || img.startsWith('data:')) ? img : `${BASE_URL}/uploads/${img.replace(/\\/g, '/')}`
@@ -392,8 +348,11 @@ const MyListings = () => {
           
           <Text style={styles.label}>House Title</Text>
           <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="e.g. PerkHouse" />
-          
-          <Text style={styles.label}>Location</Text>
+
+          <Text style={styles.label}>Street Address</Text>
+          <TextInput style={styles.input} value={street} onChangeText={setStreet} placeholder="e.g. 12 Samora Avenue" />
+
+          <Text style={styles.label}>Location / Area</Text>
           <TouchableOpacity 
             style={styles.dropdownBtn} 
             onPress={() => setShowLocationDropdown(!showLocationDropdown)}
@@ -423,6 +382,12 @@ const MyListings = () => {
           
           <Text style={styles.label}>Available Spots</Text>
           <TextInput style={styles.input} value={availableSpots} onChangeText={setAvailableSpots} keyboardType="numeric" />
+
+          <Text style={styles.label}>Total Rooms</Text>
+          <TextInput style={styles.input} value={totalRooms} onChangeText={setTotalRooms} keyboardType="numeric" placeholder="e.g. 6" />
+
+          <Text style={styles.label}>Contact Phone Number</Text>
+          <TextInput style={styles.input} value={phoneNumber} onChangeText={setPhoneNumber} keyboardType="phone-pad" placeholder="e.g. 0771234567" />
 
           <Text style={styles.label}>Gender Policy</Text>
           <View style={styles.policyRow}>

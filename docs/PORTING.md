@@ -103,11 +103,31 @@ Key model insight: **a conversation IS a Booking** (conversationId === bookingId
 - Note: realtime uses 5s polling (parity-sufficient). socket.io wiring is a later
   enhancement. Chat attachments (image/audio/file) not yet ported.
 
+### 🏠 Landlord create/edit listings — done (verified)
+- `MyListings.handleSubmit` rewritten from base64-JSON to **multipart FormData**
+  POST/PUT `/listings`: `address` JSON `{street, city}`, `price`, `availableSpots`,
+  `genderPolicy`, `phoneNumber`, `totalRooms`, repeated `amenities`, and real image
+  files (`images`) compressed via ImageManipulator. `Content-Type:
+  multipart/form-data` set per-request.
+- Form gained **Street Address**, **Total Rooms**, **Contact Phone Number** inputs;
+  Location dropdown now feeds `address.city`. `handleEdit` pre-fills from
+  `house.address.{street,city}` / `phoneNumber` / `totalRooms`. Removed the unused
+  base64 helper + `expo-file-system` import.
+- **Verified:** backend accepts the exact multipart shape (created "Sunrise Lodge"
+  with address/phone/rooms/image); landlord dashboard shows 1 property/$85; the
+  listing renders in My Listings with image + "12 Samora Avenue, Gweru"; the New
+  Listing form renders all new fields.
+- Caveat: the on-device gallery-pick → submit path wasn't automated (emulator
+  gallery empty / picker hard to drive), but the request contract + form are
+  verified. Edge case: editing with a mix of existing + newly-added images
+  replaces all with the new ones (backend only swaps imageUrls when files are
+  sent) — re-add all photos when editing images.
+
 ### ▶️ Next
 Payments (PaymentsScreen + `/bookings/confirm`, `/bookings/payments`, Stripe/Paynow),
-verification screens (Student/Landlord), landlord create/edit FormData rewrite,
-admin screens, then deeper web-matching visual theming + cleanup (extract shared
-normalizers, prune dataconnect/old mobile backend, socket.io chat).
+verification screens (Student/Landlord), admin screens, then deeper web-matching
+visual theming + cleanup (extract shared normalizers, prune dataconnect/old mobile
+backend, socket.io chat, chat attachments).
 
 ## Endpoint mapping table
 
