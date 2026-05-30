@@ -28,6 +28,9 @@ import StudentInbox from './screens/StudentInbox'; // Import StudentInbox
 import LandlordVerificationScreen from './screens/LandlordVerificationScreen'; // Import Verification Screen
 import StudentVerificationScreen from './screens/StudentVerificationScreen';
 import AdminReportGenerator from './screens/AdminReportGenerator';
+import NotificationsScreen from './screens/NotificationsScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import HelpScreen from './screens/HelpScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -165,6 +168,9 @@ export default function App() {
         {/* Shared Screens */}
         <Stack.Screen name="Payments" component={PaymentsScreen} />
         <Stack.Screen name="TermsAndConditions" component={TermsAndConditions} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: 'Notifications' }} />
+        <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: true, title: 'Settings' }} />
+        <Stack.Screen name="Help" component={HelpScreen} options={{ headerShown: true, title: 'Help & Support' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
