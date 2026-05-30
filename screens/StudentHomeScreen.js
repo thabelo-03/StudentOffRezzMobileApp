@@ -173,7 +173,12 @@ const StudentHomeScreen = () => {
   const fetchBookings = async () => {
     try {
       const response = await api.get('/bookings/student');
-      setMyBookings(response.data);
+      // Surface payment completion as a 'paid' status for the action-button logic
+      // (backend tracks it on the separate paymentStatus field).
+      const bookings = (response.data || []).map(b =>
+        b.paymentStatus === 'paid' ? { ...b, status: 'paid' } : b
+      );
+      setMyBookings(bookings);
     } catch (error) {
       console.log('Error fetching bookings:', error);
     }

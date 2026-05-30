@@ -5,38 +5,45 @@ import api from '../services/api';
 const PaymentsScreen = ({ route, navigation }) => {
   const { house, bookingId } = route.params || {};
   const housePrice = house?.price;
-  const [transactionId, setTransactionId] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initiated, setInitiated] = useState(false);
 
-  const payNowLink = "https://www.paynow.co.zw/Payment/Link/?q=c2VhcmNoPXRoYWJzdGF5JTQwZ21haWwuY29tJmFtb3VudD0wLjAwJnJlZmVyZW5jZT0mbD0w";
-
-  const handlePayNowPress = () => {
-    Linking.openURL(payNowLink).catch(() => alert('Failed to open PayNow link'));
-  };
-
-  const handleConfirmPayment = async () => {
-    if (!transactionId.trim()) {
-      Alert.alert("Error", "Please enter the Transaction ID from PayNow.");
-      return;
-    }
+  // Step 1: create a Paynow session on the backend and open the checkout page.
+  const handlePayNow = async () => {
     if (!bookingId) {
-      Alert.alert("Error", "Booking ID missing. Please try again from Home screen.");
+      Alert.alert("Error", "Booking reference missing. Please retry from the Home screen.");
       return;
     }
-
     setLoading(true);
     try {
-      await api.post('/bookings/confirm', {
-        bookingId,
-        transactionId
-      });
-      setTransactionId('');
-      Alert.alert("Success", "Payment recorded! A receipt has been sent to your email.", [
-        { text: "OK", onPress: () => navigation.navigate('Student') }
-      ]);
+      const { data } = await api.post('/payments/create-session', { bookingId });
+      if (data?.redirectUrl) {
+        setInitiated(true);
+        Linking.openURL(data.redirectUrl).catch(() => Alert.alert('Error', 'Could not open the payment page.'));
+      } else {
+        Alert.alert('Error', 'Could not start the payment. Please try again.');
+      }
     } catch (error) {
-      console.error("Payment Error:", error);
-      Alert.alert("Error", "Failed to record payment.");
+      Alert.alert('Error', error.response?.data?.error || 'Could not start the payment.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 2: after paying on Paynow, verify the payment status.
+  const handleCheckStatus = async () => {
+    setLoading(true);
+    try {
+      const { data } = await api.post('/payments/check-status', { bookingId });
+      if (data?.status === 'paid') {
+        Alert.alert("Payment Verified", "Your payment was successful!", [
+          { text: "OK", onPress: () => navigation.navigate('Student') }
+        ]);
+      } else {
+        Alert.alert("Pending", "We haven't received your payment yet. If you've just paid, wait a moment and check again.");
+      }
+    } catch (error) {
+      Alert.alert('Error', error.response?.data?.error || 'Could not verify payment.');
     } finally {
       setLoading(false);
     }
@@ -47,39 +54,28 @@ const PaymentsScreen = ({ route, navigation }) => {
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 20 }}>
         <View style={styles.cardWrapper}>
           <Text style={styles.title}>Pay for Your Listing</Text>
-          <Text style={styles.subtitle}>
-            Amount: ${housePrice}.
-          </Text>
+          <Text style={styles.subtitle}>Amount: ${housePrice}</Text>
           <Text style={styles.instruction}>
-            1. Click the button below to pay on PayNow.
+            1. Tap “Pay with PayNow” to open the secure checkout.
           </Text>
 
-          <TouchableOpacity onPress={handlePayNowPress} style={styles.paynowBtn}>
-            <Image
-              source={{ uri: 'https://www.paynow.co.zw/Content/Buttons/Medium_buttons/button_pay-now_medium.png' }}
-              style={{ width: 200, height: 60 }}
-              resizeMode="contain"
-            />
+          <TouchableOpacity onPress={handlePayNow} style={styles.confirmBtn} disabled={loading}>
+            {loading && !initiated ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmText}>Pay with PayNow</Text>}
           </TouchableOpacity>
 
           <View style={styles.divider} />
 
           <Text style={styles.instruction}>
-            2. After payment, copy the Transaction ID (e.g. 40371450) from the success page and paste it below:
+            2. After completing payment on PayNow, return here and verify.
           </Text>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Transaction ID"
-            value={transactionId}
-            onChangeText={setTransactionId}
-            keyboardType="numeric"
-          />
-
-          <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmPayment} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmText}>Confirm Payment</Text>}
+          <TouchableOpacity
+            style={[styles.confirmBtn, { backgroundColor: initiated ? '#28a745' : '#9bbfd4' }]}
+            onPress={handleCheckStatus}
+            disabled={loading || !initiated}
+          >
+            {loading && initiated ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmText}>I've Paid — Verify</Text>}
           </TouchableOpacity>
-
         </View>
       </ScrollView>
     </View>
