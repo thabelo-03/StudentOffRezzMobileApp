@@ -162,7 +162,7 @@ const LandlordDashboard = ({ navigation }) => {
           <Text style={styles.headerTitle}>Landlord Hub</Text>
         </View>
         <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconBtn}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Notifications')}>
             <Icon name="bell-outline" size={24} color="#FFF" />
             <View style={styles.badgeDot} />
           </TouchableOpacity>
@@ -181,11 +181,11 @@ const LandlordDashboard = ({ navigation }) => {
       >
         <TouchableOpacity style={styles.modalOverlay} onPress={() => setMenuVisible(false)}>
           <View style={styles.menuContainer}>
-            <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); Alert.alert("Settings", "Coming Soon"); }}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); navigation.navigate('Settings'); }}>
               <Icon name="cog-outline" size={20} color="#333" />
               <Text style={styles.menuText}>Settings</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); Alert.alert("Help", "Contact support@studenthousingconnect.com"); }}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => { setMenuVisible(false); navigation.navigate('Help'); }}>
               <Icon name="help-circle-outline" size={20} color="#333" />
               <Text style={styles.menuText}>Help</Text>
             </TouchableOpacity>

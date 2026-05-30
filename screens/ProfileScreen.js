@@ -55,8 +55,32 @@ const ProfileScreen = ({ navigation }) => {
             <View style={styles.statusIndicator} />
           </View>
 
+          <View style={styles.menuCard}>
+            <TouchableOpacity style={styles.menuRow} onPress={() => navigation.navigate('Settings')}>
+              <Icon name="settings" size={22} color="#3182ce" />
+              <Text style={styles.menuRowText}>Settings</Text>
+              <Icon name="chevron-right" size={22} color="#A0AEC0" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuRow} onPress={() => navigation.navigate('Notifications')}>
+              <Icon name="notifications-none" size={22} color="#3182ce" />
+              <Text style={styles.menuRowText}>Notifications</Text>
+              <Icon name="chevron-right" size={22} color="#A0AEC0" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuRow} onPress={() => navigation.navigate('Help')}>
+              <Icon name="help-outline" size={22} color="#3182ce" />
+              <Text style={styles.menuRowText}>Help & Support</Text>
+              <Icon name="chevron-right" size={22} color="#A0AEC0" />
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.menuRow, { borderBottomWidth: 0 }]} onPress={() => navigation.navigate('TermsAndConditions')}>
+              <Icon name="description" size={22} color="#3182ce" />
+              <Text style={styles.menuRowText}>Terms & Conditions</Text>
+              <Icon name="chevron-right" size={22} color="#A0AEC0" />
+            </TouchableOpacity>
+          </View>
+
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Icon name="logout" size={24} color="#fff" />
+            <Icon name="logout" size={22} color="#fff" />
+            <Text style={styles.logoutText}>Sign Out</Text>
           </TouchableOpacity>
         </>
       ) : (
@@ -128,17 +152,35 @@ const styles = StyleSheet.create({
     right: 16,
     top: 16,
   },
+  menuCard: {
+    marginTop: 20,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EDF2F7',
+    overflow: 'hidden',
+  },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EDF2F7',
+  },
+  menuRowText: { flex: 1, fontSize: 16, color: '#2D3748' },
   logoutButton: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#ff4d4d',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    marginTop: 20,
+    backgroundColor: '#ff4d4d',
+    paddingVertical: 14,
+    borderRadius: 12,
   },
+  logoutText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });
 
 export default ProfileScreen;
