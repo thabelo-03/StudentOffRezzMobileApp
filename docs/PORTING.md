@@ -3,7 +3,31 @@
 Porting the Expo/React Native app off Firebase onto the ThabStay web backend
 (`ThabStayWebAPP/backend`, Node/Express + Mongo + JWT).
 
-## Status
+## ✅ CHANGEOVER COMPLETE
+Firebase is fully removed (zero references in app code; bundle compiles — Metro
+builds 9.9MB of valid JS with no unresolved modules). The mobile app runs entirely
+on the ThabStay web backend. All primary flows ported and verified live on an
+Android emulator and/or via API contract tests:
+
+| Area | Status |
+|---|---|
+| Auth (Firebase → JWT) | ✅ verified on device |
+| Listings (student browse + landlord My Listings) | ✅ verified on device |
+| Landlord create/edit (multipart FormData) | ✅ verified (contract + form) |
+| Bookings (request, accept/decline, status) | ✅ verified on device |
+| Chat (conversation = booking, messaging) | ✅ verified on device |
+| Payments (Paynow create-session/check-status) | ✅ route verified (gateway = external) |
+| Verification (landlord docs; no hard gate) | ✅ verified (contract) |
+| Admin (users, listings, payments, verification, reports, config) | ✅ endpoints verified 200 |
+| Branding → ThabStay | ✅ verified on device |
+| Firebase removal / cleanup | ✅ bundle compiles clean |
+
+Remaining = enhancements only: socket.io realtime chat (currently 5s polling),
+chat attachments, deeper visual theming to match web's slate/blue palette, and
+extracting the duplicated `normalizeListing`/`resolveImageUrl` helpers into a shared
+module.
+
+## Status (detailed history)
 
 ### ✅ Phase 1 — Auth rip (DONE, backend curl-verified; needs device test)
 Firebase is fully removed from app code. Auth now flows entirely through the
