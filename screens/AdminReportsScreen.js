@@ -12,9 +12,8 @@ const AdminReportsScreen = () => {
   const fetchReports = useCallback(async () => {
     try {
       const response = await api.get('/reports');
-      // Sort by newest first
-      const sorted = response.data.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-      setReports(sorted);
+      // Backend returns reports sorted newest-first with populated reporter.
+      setReports(response.data || []);
     } catch (error) {
       console.error("Fetch Reports Error:", error);
     } finally {
@@ -35,7 +34,7 @@ const AdminReportsScreen = () => {
       <Text style={styles.header}>Reports & Issues</Text>
       <FlatList
         data={reports}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item._id}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         renderItem={({ item }) => (
           <View style={styles.card}>
@@ -44,9 +43,9 @@ const AdminReportsScreen = () => {
             </View>
             <View style={styles.content}>
               <Text style={styles.title}>{item.type || 'Issue'} Report</Text>
-              <Text style={styles.subTitle}>From: {item.reporterEmail} ({item.reporterRole})</Text>
+              <Text style={styles.subTitle}>From: {item.reporter?.name || item.reporter?.email || 'Unknown'} · {item.status}</Text>
               <Text style={styles.message}>{item.description}</Text>
-              <Text style={styles.date}>{item.timestamp ? new Date(item.timestamp).toDateString() : ''}</Text>
+              <Text style={styles.date}>{item.createdAt ? new Date(item.createdAt).toDateString() : ''}</Text>
             </View>
           </View>
         )}

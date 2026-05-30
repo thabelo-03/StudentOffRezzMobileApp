@@ -11,10 +11,11 @@ const AdminPaymentsScreen = () => {
 
   const fetchPayments = useCallback(async () => {
     try {
-      const response = await api.get('/bookings/payments');
-      setPayments(response.data);
+      // Backend returns { payments: [...paid bookings], stats: {...} }.
+      const response = await api.get('/admin/payments');
+      setPayments(response.data?.payments || []);
     } catch (error) {
-      console.error("Error fetching payments:", error);
+      console.error("Error fetching payments:", error?.response?.status || error.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -36,12 +37,12 @@ const AdminPaymentsScreen = () => {
         </View>
         <View style={styles.content}>
           <View style={styles.headerRow}>
-            <Text style={styles.amount}>${item.amount}</Text>
-            <Text style={styles.date}>{item.paymentDate ? new Date(item.paymentDate).toDateString() : 'N/A'}</Text>
+            <Text style={styles.amount}>${item.listing?.price ?? 'N/A'}</Text>
+            <Text style={styles.date}>{item.updatedAt ? new Date(item.updatedAt).toDateString() : 'N/A'}</Text>
           </View>
-          <Text style={styles.house}>{item.houseName || 'Unknown Property'}</Text>
-          <Text style={styles.subText}><Text style={{fontWeight:'bold'}}>Trans ID:</Text> {item.transactionId}</Text>
-          <Text style={styles.subText}><Text style={{fontWeight:'bold'}}>Payer:</Text> {item.studentEmail}</Text>
+          <Text style={styles.house}>{item.listing?.title || 'Unknown Property'}</Text>
+          <Text style={styles.subText}><Text style={{fontWeight:'bold'}}>Trans ID:</Text> {item.transactionId || item._id}</Text>
+          <Text style={styles.subText}><Text style={{fontWeight:'bold'}}>Payer:</Text> {item.student?.email || item.student?.name || 'N/A'}</Text>
         </View>
       </View>
     </View>
@@ -55,7 +56,7 @@ const AdminPaymentsScreen = () => {
       ) : (
         <FlatList
           data={payments}
-          keyExtractor={item => item.id}
+          keyExtractor={item => item._id}
           renderItem={renderItem}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           ListEmptyComponent={<Text style={styles.empty}>No payments recorded yet.</Text>}

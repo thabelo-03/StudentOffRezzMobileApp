@@ -50,16 +50,16 @@ const AdminReportGenerator = () => {
       const dateRange = dateLabel(fromDate) + ' - ' + dateLabel(toDate);
 
       if (reportId === 'overview') {
-        const [usersRes, housesRes] = await Promise.all([api.get('/admin/users'), api.get('/houses')]);
+        const [usersRes, housesRes] = await Promise.all([api.get('/admin/users'), api.get('/admin/listings')]);
         const html = buildPlatformOverviewHTML(usersRes.data || [], filterByDate(housesRes.data || [], 'createdAt'), dateRange);
         setPreviewHTML(html); setPreviewFilename('Platform_Overview'); setPreviewVisible(true);
       } else if (reportId === 'payments_pdf') {
-        const res = await api.get('/bookings/payments');
-        const html = buildAllPaymentsHTML(filterByDate(res.data || [], 'paymentDate'), dateRange);
+        const res = await api.get('/admin/payments');
+        const html = buildAllPaymentsHTML(filterByDate(res.data?.payments || [], 'updatedAt'), dateRange);
         setPreviewHTML(html); setPreviewFilename('All_Payments'); setPreviewVisible(true);
       } else if (reportId === 'payments_csv') {
-        const res = await api.get('/bookings/payments');
-        await generatePaymentsCSV(filterByDate(res.data || [], 'paymentDate'));
+        const res = await api.get('/admin/payments');
+        await generatePaymentsCSV(filterByDate(res.data?.payments || [], 'updatedAt'));
       } else if (reportId === 'users_pdf') {
         const res = await api.get('/admin/users');
         const html = buildUsersHTML(res.data || [], dateRange);
@@ -69,7 +69,7 @@ const AdminReportGenerator = () => {
         await generateUsersCSV(res.data || []);
       } else if (reportId === 'issues') {
         const res = await api.get('/reports');
-        const html = buildIssuesHTML(filterByDate(res.data || [], 'timestamp'), dateRange);
+        const html = buildIssuesHTML(filterByDate(res.data || [], 'createdAt'), dateRange);
         setPreviewHTML(html); setPreviewFilename('Issue_Reports'); setPreviewVisible(true);
       }
     } catch (error) {

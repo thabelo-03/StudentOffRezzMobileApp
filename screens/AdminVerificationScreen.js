@@ -2,7 +2,13 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, Linking, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import api from '../services/api';
+import api, { BASE_URL } from '../services/api';
+
+const resolveDocUrl = (u) => {
+  if (!u) return null;
+  if (u.startsWith('http') || u.startsWith('data:')) return u;
+  return `${BASE_URL}/${String(u).replace(/^\/+/, '').replace(/\\/g, '/')}`;
+};
 
 const AdminVerificationScreen = () => {
   const [pendingLandlords, setPendingLandlords] = useState([]);
@@ -10,11 +16,10 @@ const AdminVerificationScreen = () => {
 
   const fetchPending = useCallback(async () => {
     try {
-      const response = await api.get('/admin/users');
-      const allUsers = response.data;
-      // Filter for landlords and students with pending status
-      const pending = allUsers.filter(u => (u.role === 'landlord' || u.role === 'student') && u.verificationStatus === 'pending');
-      setPendingLandlords(pending); 
+      // Backend returns LandlordProfile docs (isVerified: 'pending_review') with
+      // populated userId, nationalIdNumber, and uploaded document URLs.
+      const response = await api.get('/admin/verification/pending');
+      setPendingLandlords(response.data || []);
     } catch (error) {
       Alert.alert('Error', 'Failed to fetch pending verifications.');
     } finally {
@@ -24,22 +29,30 @@ const AdminVerificationScreen = () => {
 
   useFocusEffect(useCallback(() => { fetchPending(); }, [fetchPending]));
 
-  const handleVerify = async (uid, status, email) => {
+  const handleVerify = async (profileId, userId, status, email) => {
     try {
-      await api.put(`/admin/users/${uid}/verification`, { status });
-      
-      if (status === 'verified' && email) {
+      // status: 'approve' | 'reject'
+      await api.put(`/admin/verification/${status}/${profileId}`, {});
+      // Keep the User.isVerified badge in sync with the profile decision.
+      if (userId) {
+        try { await api.put(`/admin/users/${userId}`, { isVerified: status === 'approve' }); } catch (_) {}
+      }
+
+      if (status === 'approve' && email) {
         Alert.alert(
-          'Success', 
-          'User approved. Opening email client to notify user.',
-          [{ text: 'OK', onPress: () => {
-             const subject = "ThabStay Account Approved";
-             const body = "Congratulations! Your account has been verified.\n\nRegards,\nThabStay Administrator";
-             Linking.openURL(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
-          }}]
+          'Approved',
+          'Landlord approved. Notify them by email?',
+          [
+            { text: 'Skip', style: 'cancel' },
+            { text: 'Email', onPress: () => {
+               const subject = "ThabStay Account Approved";
+               const body = "Congratulations! Your landlord account has been verified.\n\nRegards,\nThabStay Administrator";
+               Linking.openURL(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+            }},
+          ]
         );
       } else {
-        Alert.alert('Success', `User ${status === 'verified' ? 'approved' : 'rejected'}.`);
+        Alert.alert('Done', `Landlord ${status === 'approve' ? 'approved' : 'rejected'}.`);
       }
       fetchPending();
     } catch (error) {
@@ -48,45 +61,40 @@ const AdminVerificationScreen = () => {
   };
 
   const openLink = (url) => {
-    if (url) {
-      Linking.openURL(url).catch(err => Alert.alert("Error", "Cannot open link"));
+    const full = resolveDocUrl(url);
+    if (full) {
+      Linking.openURL(full).catch(() => Alert.alert("Error", "Cannot open document"));
     } else {
-      Alert.alert("No Link", "No document link provided.");
+      Alert.alert("No Document", "No document was provided.");
     }
   };
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.username}>{item.username}</Text>
-        <Text style={styles.email}>{item.email}</Text>
+        <Text style={styles.username}>{item.userId?.name || 'Landlord'}</Text>
+        <Text style={styles.email}>{item.userId?.email}</Text>
       </View>
 
-      <Text style={styles.sectionLabel}>{item.role === 'student' ? 'Student Details:' : 'Submitted Documents:'}</Text>
-      
-      {item.role === 'student' ? (
-        <View style={styles.docContainer}>
-          <Text style={{fontSize: 16, fontWeight: 'bold', color: '#333'}}>Student ID: {item.studentIdNumber}</Text>
-        </View>
-      ) : (
-        <View style={styles.docContainer}>
-          <TouchableOpacity style={styles.docBtn} onPress={() => openLink(item.documents?.proofOfResidence)}>
-            <Icon name="file-document-outline" size={20} color="#007BFF" />
-            <Text style={styles.docText}>Proof of Res</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.docBtn} onPress={() => openLink(item.documents?.idDocument)}>
-            <Icon name="card-account-details-outline" size={20} color="#007BFF" />
-            <Text style={styles.docText}>ID Document</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      <Text style={styles.sectionLabel}>Submitted Documents:</Text>
+      <Text style={{ marginBottom: 8, color: '#333' }}>National ID: {item.nationalIdNumber || 'N/A'}</Text>
+      <View style={styles.docContainer}>
+        <TouchableOpacity style={styles.docBtn} onPress={() => openLink(item.nationalIdUrl)}>
+          <Icon name="card-account-details-outline" size={20} color="#007BFF" />
+          <Text style={styles.docText}>ID Document</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.docBtn} onPress={() => openLink(item.proofOfAddressUrl)}>
+          <Icon name="file-document-outline" size={20} color="#007BFF" />
+          <Text style={styles.docText}>Proof of Address</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.actionRow}>
-        <TouchableOpacity style={[styles.btn, styles.rejectBtn]} onPress={() => handleVerify(item.id, 'rejected', item.email)}>
+        <TouchableOpacity style={[styles.btn, styles.rejectBtn]} onPress={() => handleVerify(item._id, item.userId?._id, 'reject', item.userId?.email)}>
           <Icon name="close" size={18} color="#fff" />
           <Text style={styles.btnText}>Reject</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.btn, styles.approveBtn]} onPress={() => handleVerify(item.id, 'verified', item.email)}>
+        <TouchableOpacity style={[styles.btn, styles.approveBtn]} onPress={() => handleVerify(item._id, item.userId?._id, 'approve', item.userId?.email)}>
           <Icon name="check" size={18} color="#fff" />
           <Text style={styles.btnText}>Approve</Text>
         </TouchableOpacity>
@@ -99,7 +107,7 @@ const AdminVerificationScreen = () => {
       <Text style={styles.title}>Pending Verifications</Text>
       <FlatList
         data={pendingLandlords}
-        keyExtractor={item => item.id}
+        keyExtractor={item => item._id}
         renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchPending(); }} />}
         ListEmptyComponent={<Text style={styles.empty}>No pending verifications.</Text>}

@@ -10,8 +10,18 @@ const AdminListingsScreen = () => {
 
   const fetchHouses = useCallback(async () => {
     try {
-      const response = await api.get('/houses');
-      setHouses(response.data);
+      // Admin listings: bare array of raw Mongo listings (landlord populated).
+      const response = await api.get('/admin/listings');
+      const normalized = (response.data || []).map(l => ({
+        ...l,
+        id: l._id,
+        location: l.address ? [l.address.street, l.address.city].filter(Boolean).join(', ') : (l.location || ''),
+        landlordEmail: l.landlordId?.email || l.landlordId?.name || '',
+        imageUrls: (l.imageUrls || []).map(u =>
+          (u.startsWith('http') || u.startsWith('data:')) ? u : `${BASE_URL}/${String(u).replace(/^\/+/, '').replace(/\\/g, '/')}`
+        ),
+      }));
+      setHouses(normalized);
     } catch (error) {
       Alert.alert('Error', 'Failed to fetch listings.');
     } finally {
@@ -32,7 +42,7 @@ const AdminListingsScreen = () => {
           style: "destructive",
           onPress: async () => {
             try {
-              await api.delete(`/houses/${house.id}`);
+              await api.delete(`/listings/${house.id}`);
               setHouses(houses.filter(h => h.id !== house.id));
               Alert.alert("Success", "Listing deleted.");
             } catch (error) {

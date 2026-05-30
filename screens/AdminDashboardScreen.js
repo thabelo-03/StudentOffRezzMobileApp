@@ -21,7 +21,7 @@ const AdminDashboardScreen = ({ navigation }) => {
     try {
       const [usersRes, housesRes] = await Promise.all([
         api.get('/admin/users'),
-        api.get('/houses')
+        api.get('/admin/listings')
       ]);
 
       const users = usersRes.data || [];

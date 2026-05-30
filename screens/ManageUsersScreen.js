@@ -33,20 +33,21 @@ const ManageUsersScreen = () => {
   };
 
   const handleBlock = async (user) => {
-    const newStatus = !user.disabled;
-    const action = newStatus ? 'Block' : 'Unblock';
-    
+    const isSuspended = user.status === 'suspended';
+    const newStatus = isSuspended ? 'active' : 'suspended';
+    const action = isSuspended ? 'Unblock' : 'Block';
+
     Alert.alert(
       `${action} User`,
-      `Are you sure you want to ${action.toLowerCase()} ${user.username}?`,
+      `Are you sure you want to ${action.toLowerCase()} ${user.name}?`,
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Yes", 
+        {
+          text: "Yes",
           onPress: async () => {
             try {
-              await api.put(`/admin/users/${user.id}/status`, { disabled: newStatus });
-              setUsers(users.map(u => u.id === user.id ? { ...u, disabled: newStatus } : u));
+              await api.put(`/admin/users/${user._id}`, { status: newStatus });
+              setUsers(users.map(u => u._id === user._id ? { ...u, status: newStatus } : u));
               Alert.alert("Success", `User ${action.toLowerCase()}ed successfully.`);
             } catch (error) {
               Alert.alert("Error", "Failed to update user status.");
@@ -60,16 +61,16 @@ const ManageUsersScreen = () => {
   const handleDelete = (user) => {
     Alert.alert(
       "Delete User",
-      `Are you sure you want to permanently delete ${user.username}? This cannot be undone.`,
+      `Are you sure you want to permanently delete ${user.name}? This cannot be undone.`,
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
+        {
+          text: "Delete",
           style: "destructive",
           onPress: async () => {
             try {
-              await api.delete(`/admin/users/${user.id}`);
-              setUsers(users.filter(u => u.id !== user.id));
+              await api.delete(`/admin/users/${user._id}`);
+              setUsers(users.filter(u => u._id !== user._id));
               Alert.alert("Success", "User deleted successfully.");
             } catch (error) {
               Alert.alert("Error", "Failed to delete user.");
@@ -82,17 +83,18 @@ const ManageUsersScreen = () => {
 
   const handleResetPassword = async (user) => {
     try {
-      await api.post('/admin/users/reset-password', { email: user.email });
-      Alert.alert("Success", "Password reset link generated on server.");
+      // Reuse the public forgot-password flow to email the user a reset link.
+      await api.post('/auth/forgot-password', { email: user.email });
+      Alert.alert("Success", "A password reset email has been sent to the user.");
     } catch (error) {
-      Alert.alert("Error", "Failed to generate reset link.");
+      Alert.alert("Error", "Failed to send reset email.");
     }
   };
 
   const getFilteredUsers = () => {
     return users.filter(user => {
-      const matchesSearch = 
-        (user.username || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+      const matchesSearch =
+        (user.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (user.email || '').toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesFilter = filterRole === 'All' || 
@@ -138,22 +140,22 @@ const ManageUsersScreen = () => {
 
       <FlatList
         data={getFilteredUsers()}
-        keyExtractor={(item) => item.id || item.uid}
+        keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <View style={styles.userCard}>
             <View style={styles.cardHeader}>
               <View>
-                <Text style={styles.username}>{item.username || 'N/A'}</Text>
+                <Text style={styles.username}>{item.name || 'N/A'}{item.status === 'suspended' ? ' (suspended)' : ''}</Text>
                 <Text style={styles.email}>{item.email}</Text>
               </View>
               <View style={[styles.roleBadge, item.role === 'admin' ? styles.adminBadge : styles.userBadge]}>
                 <Text style={styles.roleText}>{item.role}</Text>
               </View>
             </View>
-            
+
             <View style={styles.actionRow}>
               <TouchableOpacity style={styles.actionBtn} onPress={() => handleBlock(item)}>
-                <Icon name={item.disabled ? "account-check" : "account-off"} size={22} color={item.disabled ? "#4CAF50" : "#FF9800"} />
+                <Icon name={item.status === 'suspended' ? "account-check" : "account-off"} size={22} color={item.status === 'suspended' ? "#4CAF50" : "#FF9800"} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionBtn} onPress={() => handleResetPassword(item)}>
                 <Icon name="lock-reset" size={22} color="#2196F3" />
