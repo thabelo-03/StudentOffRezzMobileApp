@@ -4,7 +4,6 @@
   "main": "index.js",
   "dependencies": {
     "@expo/metro-runtime": "~4.0.1",
-    "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/datetimepicker": "8.2.0",
     "@react-native-community/masked-view": "^0.1.11",
