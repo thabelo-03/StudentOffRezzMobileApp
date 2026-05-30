@@ -6,40 +6,10 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import api, { BASE_URL } from '../services/api';
+import { normalizeListing } from '../services/listings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
-
-// Resolve a stored image path (e.g. "uploads/listings/x.jpg") to a full URL.
-const resolveImageUrl = (u) => {
-  if (!u) return null;
-  if (u.startsWith('http') || u.startsWith('data:')) return u;
-  return `${BASE_URL}/${String(u).replace(/^\/+/, '').replace(/\\/g, '/')}`;
-};
-
-// Map a web-backend Listing (Mongo) into the shape this screen's UI expects.
-// The screen was originally written against the Firebase RTDB house shape.
-const normalizeListing = (l) => {
-  if (!l) return l;
-  const landlord = l.landlordId && typeof l.landlordId === 'object' ? l.landlordId : null;
-  const images = (l.imageUrls || l.images || []).map(resolveImageUrl).filter(Boolean);
-  const location = l.address
-    ? [l.address.street, l.address.city].filter(Boolean).join(', ')
-    : (l.location || '');
-  return {
-    ...l,
-    id: l._id || l.id,
-    location,
-    images,
-    imageUrls: images,
-    createdAt: l.createdAt ? new Date(l.createdAt).getTime() : null,
-    // landlordId is populated as an object on the backend; expose the id string
-    // (used for booking/chat) plus a display name.
-    landlordId: landlord ? landlord._id : l.landlordId,
-    landlordName: landlord ? landlord.name : undefined,
-    universityName: l.universityId && typeof l.universityId === 'object' ? l.universityId.name : undefined,
-  };
-};
 
 const StudentHomeScreen = () => {
   const navigation = useNavigation();

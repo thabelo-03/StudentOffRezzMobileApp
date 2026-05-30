@@ -2,13 +2,8 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, Linking, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import api, { BASE_URL } from '../services/api';
-
-const resolveDocUrl = (u) => {
-  if (!u) return null;
-  if (u.startsWith('http') || u.startsWith('data:')) return u;
-  return `${BASE_URL}/${String(u).replace(/^\/+/, '').replace(/\\/g, '/')}`;
-};
+import api from '../services/api';
+import { resolveImageUrl as resolveDocUrl } from '../services/listings';
 
 const AdminVerificationScreen = () => {
   const [pendingLandlords, setPendingLandlords] = useState([]);

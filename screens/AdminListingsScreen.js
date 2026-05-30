@@ -3,6 +3,7 @@ import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert, TouchableOp
 import { useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import api, { BASE_URL } from '../services/api';
+import { normalizeListing } from '../services/listings';
 
 const AdminListingsScreen = () => {
   const [houses, setHouses] = useState([]);
@@ -12,16 +13,7 @@ const AdminListingsScreen = () => {
     try {
       // Admin listings: bare array of raw Mongo listings (landlord populated).
       const response = await api.get('/admin/listings');
-      const normalized = (response.data || []).map(l => ({
-        ...l,
-        id: l._id,
-        location: l.address ? [l.address.street, l.address.city].filter(Boolean).join(', ') : (l.location || ''),
-        landlordEmail: l.landlordId?.email || l.landlordId?.name || '',
-        imageUrls: (l.imageUrls || []).map(u =>
-          (u.startsWith('http') || u.startsWith('data:')) ? u : `${BASE_URL}/${String(u).replace(/^\/+/, '').replace(/\\/g, '/')}`
-        ),
-      }));
-      setHouses(normalized);
+      setHouses((response.data || []).map(normalizeListing));
     } catch (error) {
       Alert.alert('Error', 'Failed to fetch listings.');
     } finally {
