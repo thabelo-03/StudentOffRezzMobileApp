@@ -12,8 +12,8 @@ const LandlordInbox = ({ navigation }) => {
 
   const fetchInquiries = async () => {
     try {
-      // Pointing to your conversations endpoint
-      const response = await api.get('/chat/landlord-conversations');
+      // Unified conversations endpoint (otherUser is role-aware: the student here).
+      const response = await api.get('/chat/conversations');
       setConversations(response.data);
     } catch (error) {
       console.error("Inbox Load Error:", error);
@@ -44,36 +44,35 @@ const LandlordInbox = ({ navigation }) => {
   };
 
   const renderItem = ({ item }) => {
-    // Map based on Firebase-compatible data keys
-    const studentName = item.studentName || 'Student User';
+    // Backend /chat/conversations item: { conversationId, status, otherUser:{...},
+    // listingTitle, lastMessage, lastMessageDate }. otherUser is the student here.
+    const studentName = item.otherUser?.name || 'Student User';
     const lastMsg = item.lastMessage || '';
-    const studentId = item.studentId;
-    // Mock unread count if not provided by backend yet, or use item.unreadCount
-    const unreadCount = item.unreadCount || 0; 
-    const time = item.updatedAt || item.createdAt || new Date().toISOString();
+    const conversationId = item.conversationId;
+    const unreadCount = item.unreadCount || 0;
+    const time = item.lastMessageDate || new Date().toISOString();
 
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.chatRow}
         onPress={() => {
           setSidebarVisible(false); // Close sidebar if open
-          if (!studentId) {
-            Alert.alert("Error", "Missing Student ID context.");
+          if (!conversationId) {
+            Alert.alert("Error", "Missing conversation context.");
             return;
           }
-          navigation.navigate('ChatDetail', { 
-            partnerId: studentId,
+          navigation.navigate('ChatDetail', {
+            conversationId,
             partnerName: studentName,
-            houseTitle: item.houseTitle,
-            houseId: item.houseId // FIX: Pass houseId so ChatDetail can fetch messages
+            houseTitle: item.listingTitle,
           });
         }}
       >
         {/* Avatar Area */}
         <View style={styles.avatarContainer}>
-          <Image 
-            source={{ uri: item.studentAvatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }} 
-            style={styles.avatar} 
+          <Image
+            source={{ uri: item.otherUser?.profilePicture || 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }}
+            style={styles.avatar}
           />
         </View>
 
@@ -112,7 +111,7 @@ const LandlordInbox = ({ navigation }) => {
 
       <FlatList
         data={conversations}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.conversationId}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
         refreshControl={
@@ -143,7 +142,7 @@ const LandlordInbox = ({ navigation }) => {
             </View>
             <FlatList
               data={conversations}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.conversationId}
               renderItem={renderItem}
               contentContainerStyle={styles.sidebarList}
             />

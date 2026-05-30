@@ -10,60 +10,60 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ChatDetail = ({ route, navigation }) => {
     const params = route.params || {};
-    // partnerId represents the person we are chatting with (Landlord or Student)
-    const { partnerId, partnerName, houseTitle, houseId } = params;
-  
+    // The backend models a conversation as a Booking; conversationId === bookingId.
+    const { conversationId, partnerName, houseTitle } = params;
+
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [currentUserId, setCurrentUserId] = useState(null);
     const flatListRef = useRef();
-  
+
     useEffect(() => {
       const fetchUser = async () => {
         const userJson = await AsyncStorage.getItem('user');
         if (userJson) {
           const user = JSON.parse(userJson);
-          setCurrentUserId(user.uid);
+          setCurrentUserId(user.id || user._id);
         }
       };
-  
+
       fetchUser();
-  
+
       const fetchMessages = async () => {
+        if (!conversationId) { setLoading(false); return; }
         try {
-          const response = await api.get(`/chat/messages/${partnerId}?houseId=${houseId}`);
+          const response = await api.get(`/chat/${conversationId}`);
           setMessages(response.data);
         } catch (err) {
-          console.error("Fetch Error:", err);
+          console.error("Fetch Error:", err?.response?.status || err.message);
         } finally {
           setLoading(false);
         }
       };
-  
+
       fetchMessages();
       const interval = setInterval(fetchMessages, 5000);
       return () => clearInterval(interval);
-    }, [partnerId, houseId]);
-  
+    }, [conversationId]);
+
     const sendMessage = async () => {
-      if (!newMessage.trim()) return;
+      if (!newMessage.trim() || !conversationId) return;
       try {
-        const response = await api.post('/chat/send', {
-          receiverId: partnerId,
-          text: newMessage,
-          houseTitle: houseTitle,
-          houseId: houseId
+        const response = await api.post(`/chat/${conversationId}`, {
+          message: newMessage,
         });
         setMessages(prev => [...prev, response.data]);
         setNewMessage('');
       } catch (err) {
-        console.error("Send Error:", err);
+        console.error("Send Error:", err?.response?.status || err.message);
       }
     };
-  
+
     const renderItem = ({ item }) => {
-        const isMyMessage = item.senderId === currentUserId;
+        // Backend message.sender is populated ({ _id, name, ... }).
+        const senderId = item.sender?._id || item.sender;
+        const isMyMessage = senderId === currentUserId;
     
         return (
           <View style={[
@@ -102,7 +102,7 @@ const ChatDetail = ({ route, navigation }) => {
           <FlatList
             ref={flatListRef}
             data={messages}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item._id || item.id}
             renderItem={renderItem}
             contentContainerStyle={styles.list}
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}

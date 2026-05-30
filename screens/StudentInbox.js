@@ -13,7 +13,7 @@ const StudentInbox = ({ navigation }) => {
 
   const fetchConversations = async () => {
     try {
-      const response = await api.get('/chat/student-conversations');
+      const response = await api.get('/chat/conversations');
       setConversations(response.data);
     } catch (error) {
       console.error("Inbox Load Error:", error);
@@ -54,27 +54,28 @@ const StudentInbox = ({ navigation }) => {
   };
 
   const renderItem = ({ item }) => {
-    const partnerName = item.otherPartyName || 'Landlord';
+    // Backend /chat/conversations item: { conversationId, status, otherUser:{...},
+    // listingTitle, lastMessage, lastMessageDate }.
+    const partnerName = item.otherUser?.name || 'Landlord';
     const lastMsg = item.lastMessage || '';
-    const time = item.updatedAt || item.createdAt || new Date().toISOString();
+    const time = item.lastMessageDate || new Date().toISOString();
 
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.chatRow}
         onPress={() => {
-          navigation.navigate('ChatDetail', { 
-            partnerId: item.otherPartyId, // Pass the otherPartyId (landlord's UID)
-            partnerName: item.otherPartyName,
-            houseTitle: item.houseTitle,
-            houseId: item.houseId
+          navigation.navigate('ChatDetail', {
+            conversationId: item.conversationId,
+            partnerName,
+            houseTitle: item.listingTitle,
           });
         }}
       >
         {/* Avatar Area */}
         <View style={styles.avatarContainer}>
-          <Image 
-            source={{ uri: item.otherPartyAvatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }} 
-            style={styles.avatar} 
+          <Image
+            source={{ uri: item.otherUser?.profilePicture || 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }}
+            style={styles.avatar}
           />
         </View>
 
@@ -84,7 +85,7 @@ const StudentInbox = ({ navigation }) => {
             <Text style={styles.studentName} numberOfLines={1}>{partnerName}</Text>
             <Text style={styles.timeText}>{formatTime(time)}</Text>
           </View>
-          <Text style={styles.houseTitle}>{item.houseTitle || "Property Inquiry"}</Text>
+          <Text style={styles.houseTitle}>{item.listingTitle || "Property Inquiry"}</Text>
           <Text style={styles.lastMsg} numberOfLines={1}>{lastMsg}</Text>
         </View>
       </TouchableOpacity>
@@ -127,7 +128,7 @@ const StudentInbox = ({ navigation }) => {
 
       <FlatList
         data={conversations}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.conversationId}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
         refreshControl={

@@ -316,15 +316,27 @@ const StudentHomeScreen = () => {
     );
   };
 
-  const handleOpenChat = () => {
+  const handleOpenChat = async () => {
     if (!activeHouse) return;
-    setDetailVisible(false);
-    navigation.navigate('ChatDetail', {
-      partnerId: activeHouse.landlordId,
-      partnerName: 'Landlord',
-      houseTitle: activeHouse.title || activeHouse.houseName,
-      houseId: activeHouse.id
-    });
+    try {
+      // A conversation IS a booking. Create-or-get one for this listing, then open it.
+      const existing = getBookingStatus(activeHouse.id);
+      let conversationId = existing?._id;
+      if (!conversationId) {
+        const res = await api.post('/chat/conversations', { listingId: activeHouse.id });
+        conversationId = res.data?._id;
+        await fetchBookings();
+      }
+      setDetailVisible(false);
+      navigation.navigate('ChatDetail', {
+        conversationId,
+        partnerName: activeHouse.landlordName || 'Landlord',
+        houseTitle: activeHouse.title || activeHouse.houseName,
+      });
+    } catch (err) {
+      console.error('Open chat error:', err?.response?.status || err.message);
+      Alert.alert('Error', 'Could not open the conversation.');
+    }
   };
 
   const handleRequestBooking = async () => {
@@ -336,24 +348,24 @@ const StudentHomeScreen = () => {
     
     try {
       setLoading(true);
-      // 1. Create Booking Request (backend derives landlord + amount from the listing).
-      await api.post('/bookings', {
-        listingId: activeHouse.id,
-        message: `I am interested in ${activeHouse.title || activeHouse.houseName}. Is it available?`,
-      });
+      const greeting = `I am interested in ${activeHouse.title || activeHouse.houseName}. Is it available?`;
 
-      // 2. Send an initial chat message. Chat isn't ported yet (conversation-id model
-      //    + socket.io), so keep this non-fatal — a failure here must not mask the
-      //    successful booking above. TODO: wire to the real chat flow.
-      try {
-        await api.post('/chat/send', {
-          receiverId: activeHouse.landlordId,
-          text: `I am interested in ${activeHouse.title || activeHouse.houseName}. Is it available?`,
-          houseTitle: activeHouse.title || activeHouse.houseName,
-          houseId: activeHouse.id
-        });
-      } catch (chatErr) {
-        console.log('Initial chat message skipped (chat not yet ported):', chatErr?.response?.status || chatErr?.message);
+      // 1. Create Booking Request (backend derives landlord + amount from the listing).
+      //    The booking IS the conversation; its _id is the conversationId.
+      const bookingRes = await api.post('/bookings', {
+        listingId: activeHouse.id,
+        message: greeting,
+      });
+      const conversationId = bookingRes.data?._id;
+
+      // 2. Post the initial chat message into that conversation. Keep it non-fatal so a
+      //    chat hiccup can't mask the successful booking above.
+      if (conversationId) {
+        try {
+          await api.post(`/chat/${conversationId}`, { message: greeting });
+        } catch (chatErr) {
+          console.log('Initial chat message failed:', chatErr?.response?.status || chatErr?.message);
+        }
       }
 
       Alert.alert("Request Sent", "Your booking request has been sent to the landlord. You can continue the conversation in your Inbox.");

@@ -85,11 +85,29 @@ Metro must run WITHOUT `CI=1` (CI disables file watching → serves a stale bund
 backend via the same reverse (or `10.0.2.2:3001`). Test user: porttest@example.com
 / test123 (isVerified=true).
 
-### ▶️ Next: Chat (the big one)
-Inbox is empty + `/chat/send` 404s. Backend chat is conversation-id based
-(`POST /chat/conversations`, `GET /chat/conversations`, `GET /chat/:conversationId`,
-`POST /chat/:conversationId`) + socket.io. Mobile calls `/chat/send`,
-`/chat/student-conversations`, `/chat/messages/:partnerId`. Needs a real remap.
+### 💬 Chat — done (verified live on emulator)
+Key model insight: **a conversation IS a Booking** (conversationId === bookingId).
+- `StudentInbox` + `LandlordInbox`: `/chat/student|landlord-conversations` →
+  unified `GET /chat/conversations`; map item fields `otherUser.{name,profilePicture}`,
+  `conversationId`, `listingTitle`, `lastMessageDate`. Navigate ChatDetail with
+  `conversationId`.
+- `ChatDetail`: partner-id model → `conversationId`. `GET /chat/:id` (poll 5s),
+  `POST /chat/:id { message }`. Sent/received detection via `message.sender._id`
+  vs stored `user.id` (was `senderId`/`user.uid`).
+- `StudentHomeScreen.handleOpenChat`: create-or-get conversation via
+  `POST /chat/conversations { listingId }`, then open it. Booking flow posts its
+  initial greeting to `POST /chat/:bookingId`.
+- **Verified:** student inbox shows the "prim / ridge veiw" conversation → opened
+  it → sent "Hi.Available?" → rendered as a right-aligned bubble and persisted
+  (confirmed via `GET /chat/:id`).
+- Note: realtime uses 5s polling (parity-sufficient). socket.io wiring is a later
+  enhancement. Chat attachments (image/audio/file) not yet ported.
+
+### ▶️ Next
+Payments (PaymentsScreen + `/bookings/confirm`, `/bookings/payments`, Stripe/Paynow),
+verification screens (Student/Landlord), landlord create/edit FormData rewrite,
+admin screens, then deeper web-matching visual theming + cleanup (extract shared
+normalizers, prune dataconnect/old mobile backend, socket.io chat).
 
 ## Endpoint mapping table
 
