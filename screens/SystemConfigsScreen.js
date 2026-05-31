@@ -2,13 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, Switch, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import api from '../services/api';
 
-const MODES = [
-  { key: 'off', label: 'Off' },
-  { key: 'commission', label: 'Commission' },
-  { key: 'subscription', label: 'Subscription' },
-  { key: 'listing_fee', label: 'Listing Fee' },
-];
-
 const SystemConfigsScreen = () => {
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,24 +12,36 @@ const SystemConfigsScreen = () => {
   const fetchConfig = async () => {
     try {
       const { data } = await api.get('/admin/config');
-      setConfig({ ...data, monetization: data.monetization || {} });
-    } catch (error) {
+      setConfig({
+        ...data,
+        monetization: data.monetization || {},
+        gateways: data.gateways || {},
+      });
+    } catch (e) {
       Alert.alert('Error', 'Failed to load configuration');
     } finally {
       setLoading(false);
     }
   };
 
-  const set = (key, val) => setConfig(c => ({ ...c, [key]: val }));
-  const setMon = (key, val) => setConfig(c => ({ ...c, monetization: { ...c.monetization, [key]: val } }));
+  // nested setter: path like 'monetization.rentalCommission.percent'
+  const setPath = (path, val) => setConfig(c => {
+    const next = JSON.parse(JSON.stringify(c));
+    const keys = path.split('.');
+    let o = next;
+    for (let i = 0; i < keys.length - 1; i++) { o[keys[i]] = o[keys[i]] || {}; o = o[keys[i]]; }
+    o[keys[keys.length - 1]] = val;
+    return next;
+  });
+  const get = (path, dflt) => path.split('.').reduce((o, k) => (o == null ? o : o[k]), config) ?? dflt;
 
   const handleSave = async () => {
     try {
       setSaving(true);
       const { data } = await api.put('/admin/config', config);
-      setConfig({ ...data, monetization: data.monetization || {} });
+      setConfig({ ...data, monetization: data.monetization || {}, gateways: data.gateways || {} });
       Alert.alert('Success', 'Configuration updated');
-    } catch (error) {
+    } catch (e) {
       Alert.alert('Error', 'Failed to save configuration');
     } finally {
       setSaving(false);
@@ -44,22 +49,28 @@ const SystemConfigsScreen = () => {
   };
 
   if (loading || !config) return <ActivityIndicator size="large" color="#2563eb" style={styles.centered} />;
-  const mon = config.monetization || {};
 
-  const Row = ({ label, hint, value, onValueChange }) => (
+  const Toggle = ({ label, hint, path }) => (
     <View style={styles.rowWrap}>
       <View style={styles.settingRow}>
         <Text style={styles.label}>{label}</Text>
-        <Switch value={!!value} onValueChange={onValueChange} trackColor={{ true: '#93c5fd' }} thumbColor={value ? '#2563eb' : '#f4f4f5'} />
+        <Switch value={!!get(path)} onValueChange={(v) => setPath(path, v)} trackColor={{ true: '#93c5fd' }} thumbColor={get(path) ? '#2563eb' : '#f4f4f5'} />
       </View>
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
     </View>
   );
-
-  const NumField = ({ label, suffix, value, onChangeText }) => (
+  const Field = ({ label, path, numeric, secret, placeholder }) => (
     <View style={styles.inputGroup}>
-      <Text style={styles.label}>{label}{suffix ? ` (${suffix})` : ''}</Text>
-      <TextInput style={styles.input} value={String(value ?? '')} onChangeText={onChangeText} keyboardType="numeric" />
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={styles.input}
+        value={String(get(path, '') ?? '')}
+        onChangeText={(t) => setPath(path, numeric ? (Number(t) || 0) : t)}
+        keyboardType={numeric ? 'numeric' : 'default'}
+        placeholder={placeholder}
+        autoCapitalize="none"
+        secureTextEntry={false}
+      />
     </View>
   );
 
@@ -69,42 +80,49 @@ const SystemConfigsScreen = () => {
 
       <Text style={styles.section}>General</Text>
       <View style={styles.card}>
-        <Text style={styles.label}>Support Email</Text>
-        <TextInput style={styles.input} value={config.supportEmail} onChangeText={(t) => set('supportEmail', t)} placeholder="support@thabstay.com" autoCapitalize="none" />
+        <Field label="Support Email" path="supportEmail" placeholder="support@thabstay.com" />
       </View>
 
       <Text style={styles.section}>Platform Switches</Text>
       <View style={styles.card}>
-        <Row label="Maintenance Mode" hint="Blocks everyone except admins from logging in." value={config.maintenanceMode} onValueChange={(v) => set('maintenanceMode', v)} />
-        <Row label="Allow Registrations" hint="Turn off to stop new sign-ups." value={config.allowRegistrations} onValueChange={(v) => set('allowRegistrations', v)} />
-        <Row label="Require Listing Approval" hint="Hide new listings from students until an admin approves them." value={config.requireListingApproval} onValueChange={(v) => set('requireListingApproval', v)} />
+        <Toggle label="Maintenance Mode" hint="Blocks everyone except admins from logging in." path="maintenanceMode" />
+        <Toggle label="Allow Registrations" hint="Turn off to stop new sign-ups." path="allowRegistrations" />
+        <Toggle label="Require Listing Approval" hint="Hide new listings until an admin approves them." path="requireListingApproval" />
+        <Toggle label="Hide Contact Until Booked" hint="Hide landlord phone until a booking exists (reduces leakage)." path="monetization.hideContactUntilBooked" />
       </View>
 
       <Text style={styles.section}>Monetization</Text>
       <View style={styles.card}>
-        <Text style={styles.label}>Model</Text>
-        <View style={styles.modeRow}>
-          {MODES.map(m => (
-            <TouchableOpacity key={m.key} style={[styles.modeBtn, mon.mode === m.key && styles.modeBtnActive]} onPress={() => setMon('mode', m.key)}>
-              <Text style={[styles.modeText, mon.mode === m.key && styles.modeTextActive]}>{m.label}</Text>
-            </TouchableOpacity>
+        <Text style={styles.subhead}>Student Subscription</Text>
+        <Toggle label="Enabled" path="monetization.studentSubscription.enabled" />
+        <Field label="Monthly Price ($)" path="monetization.studentSubscription.monthlyPrice" numeric />
+
+        <View style={styles.sep} />
+        <Text style={styles.subhead}>Rental Commission</Text>
+        <Toggle label="Enabled" path="monetization.rentalCommission.enabled" />
+        <Field label="Commission (% of payment)" path="monetization.rentalCommission.percent" numeric />
+
+        <View style={styles.sep} />
+        <Text style={styles.subhead}>Landlord Premium</Text>
+        <Toggle label="Enabled" path="monetization.landlordPremium.enabled" />
+        <Field label="Monthly Price ($)" path="monetization.landlordPremium.monthlyPrice" numeric />
+        <Field label="Free Listing Limit" path="monetization.landlordPremium.freeListingLimit" numeric />
+        <Field label="Premium Listing Limit (0 = unlimited)" path="monetization.landlordPremium.premiumListingLimit" numeric />
+      </View>
+
+      <Text style={styles.section}>Payment Gateways</Text>
+      {[
+        { key: 'paynow', label: 'Paynow', creds: [['integrationId', 'Integration ID'], ['integrationKey', 'Integration Key']] },
+        { key: 'ecocash', label: 'EcoCash', creds: [['merchantCode', 'Merchant Code'], ['apiKey', 'API Key'], ['apiSecret', 'API Secret']] },
+        { key: 'smilepay', label: 'ZB SmilePay', creds: [['merchantId', 'Merchant ID'], ['apiKey', 'API Key'], ['apiSecret', 'API Secret']] },
+      ].map(gw => (
+        <View style={styles.card} key={gw.key}>
+          <Toggle label={gw.label} path={`gateways.${gw.key}.enabled`} />
+          {gw.creds.map(([f, lbl]) => (
+            <Field key={f} label={lbl} path={`gateways.${gw.key}.${f}`} placeholder={lbl} />
           ))}
         </View>
-
-        <NumField label="Commission" suffix="% of deposit" value={mon.commissionPercent} onChangeText={(t) => setMon('commissionPercent', Number(t) || 0)} />
-        <NumField label="Deposit" suffix="% of monthly price" value={mon.depositPercent} onChangeText={(t) => setMon('depositPercent', Number(t) || 0)} />
-        <NumField label="Free Listing View Limit" suffix="0 = unlimited" value={mon.freeListingViewLimit} onChangeText={(t) => setMon('freeListingViewLimit', Number(t) || 0)} />
-
-        <Row label="Require Deposit to Book" hint="Students must pay a deposit to confirm a booking." value={mon.requireDepositToBook} onValueChange={(v) => setMon('requireDepositToBook', v)} />
-        <Row label="Hide Contact Until Booked" hint="Hide landlord phone/chat until a deposit is paid (reduces off-platform leakage)." value={mon.hideContactUntilBooked} onValueChange={(v) => setMon('hideContactUntilBooked', v)} />
-
-        {mon.mode === 'subscription' && (
-          <>
-            <NumField label="Pro Price Monthly" suffix="$" value={mon.proPriceMonthly} onChangeText={(t) => setMon('proPriceMonthly', Number(t) || 0)} />
-            <NumField label="Pro Price One-Time" suffix="$" value={mon.proPriceOneTime} onChangeText={(t) => setMon('proPriceOneTime', Number(t) || 0)} />
-          </>
-        )}
-      </View>
+      ))}
 
       <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
         {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveText}>Save Configuration</Text>}
@@ -117,20 +135,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F7FAFC' },
   centered: { flex: 1, justifyContent: 'center' },
   title: { fontSize: 24, fontWeight: '800', marginBottom: 12, color: '#1a365d' },
-  section: { fontSize: 13, fontWeight: '700', color: '#718096', textTransform: 'uppercase', marginTop: 14, marginBottom: 8 },
-  card: { backgroundColor: '#fff', borderRadius: 14, padding: 16, elevation: 1 },
-  rowWrap: { marginBottom: 6 },
+  section: { fontSize: 13, fontWeight: '700', color: '#718096', textTransform: 'uppercase', marginTop: 16, marginBottom: 8 },
+  subhead: { fontSize: 14, fontWeight: '700', color: '#2563eb', marginBottom: 4 },
+  card: { backgroundColor: '#fff', borderRadius: 14, padding: 16, elevation: 1, marginBottom: 10 },
+  rowWrap: { marginBottom: 4 },
   settingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
   label: { fontSize: 15, fontWeight: '600', color: '#2D3748' },
-  hint: { fontSize: 12, color: '#94a3b8', marginBottom: 8 },
-  inputGroup: { marginTop: 10 },
-  input: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 10, padding: 12, marginTop: 6, fontSize: 16, backgroundColor: '#F8FAFC' },
-  modeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8, marginBottom: 4 },
-  modeBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#EDF2F7' },
-  modeBtnActive: { backgroundColor: '#2563eb' },
-  modeText: { color: '#4A5568', fontWeight: '600' },
-  modeTextActive: { color: '#fff' },
-  saveBtn: { backgroundColor: '#2563eb', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 20 },
+  hint: { fontSize: 12, color: '#94a3b8', marginBottom: 6 },
+  inputGroup: { marginTop: 8 },
+  input: { borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 10, padding: 12, marginTop: 6, fontSize: 15, backgroundColor: '#F8FAFC' },
+  sep: { height: 1, backgroundColor: '#EDF2F7', marginVertical: 12 },
+  saveBtn: { backgroundColor: '#2563eb', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 16 },
   saveText: { color: '#fff', fontWeight: '700', fontSize: 16 },
 });
 
