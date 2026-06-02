@@ -31,6 +31,7 @@ import AdminReportGenerator from './screens/AdminReportGenerator';
 import NotificationsScreen from './screens/NotificationsScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import HelpScreen from './screens/HelpScreen';
+import BillingScreen from './screens/BillingScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -171,6 +172,7 @@ export default function App() {
         <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: true, title: 'Notifications' }} />
         <Stack.Screen name="Settings" component={SettingsScreen} options={{ headerShown: true, title: 'Settings' }} />
         <Stack.Screen name="Help" component={HelpScreen} options={{ headerShown: true, title: 'Help & Support' }} />
+        <Stack.Screen name="Billing" component={BillingScreen} options={{ headerShown: true, title: 'Subscription & Premium' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

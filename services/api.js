@@ -5,7 +5,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Points at the ThabStay web backend (Express/Mongo). Override per-environment with
 // EXPO_PUBLIC_API_BASE_URL, e.g. http://<your-LAN-ip>:3001 for local dev or the
 // Heroku URL in production.
-const DEFAULT_BASE_URL = 'https://studentoffrezzmobileapp.onrender.com';
+// Live ThabStay backend on Heroku. Will become https://thabstay.co.zw once DNS
+// propagates (override via EXPO_PUBLIC_API_BASE_URL for local dev).
+const DEFAULT_BASE_URL = 'https://thabstay-1c4cd9c3caf4.herokuapp.com';
 
 const configuredBaseUrl = (process.env.EXPO_PUBLIC_API_BASE_URL || DEFAULT_BASE_URL)
   .trim()

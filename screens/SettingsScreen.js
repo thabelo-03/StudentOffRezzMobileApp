@@ -76,6 +76,13 @@ const SettingsScreen = ({ navigation }) => {
 
       <Text style={styles.section}>More</Text>
       <View style={styles.card}>
+        {(user?.role === 'student' || user?.role === 'landlord') && (
+          <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('Billing')}>
+            <Icon name={user?.role === 'landlord' ? 'crown-outline' : 'star-outline'} size={22} color="#2563eb" />
+            <Text style={styles.linkText}>{user?.role === 'landlord' ? 'Go Premium' : 'Subscription'}</Text>
+            <Icon name="chevron-right" size={22} color="#A0AEC0" />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.linkRow} onPress={() => navigation.navigate('TermsAndConditions')}>
           <Icon name="file-document-outline" size={22} color="#2563eb" />
           <Text style={styles.linkText}>Terms & Conditions</Text>
