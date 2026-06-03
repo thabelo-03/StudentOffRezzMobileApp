@@ -6,7 +6,11 @@ import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../services/api';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
+import api, { BASE_URL } from '../services/api';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const navigation = useNavigation();
@@ -162,6 +166,49 @@ export default function LoginScreen() {
     }
   };
 
+  const goToRoleHome = (role) => {
+    if (role === 'admin') navigation.navigate('AdminDashboard');
+    else if (role === 'landlord') navigation.navigate('Landlord');
+    else if (role === 'student') navigation.navigate('Student');
+    else showError('Your account role is not recognized. Please contact support.', 'general');
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      clearErrors();
+      setLoading(true);
+      // Deep link the backend will return the JWT to (e.g. thabstay://google-auth).
+      const redirectUrl = Linking.createURL('google-auth');
+      const authUrl = `${BASE_URL}/auth/google?platform=mobile&redirect=${encodeURIComponent(redirectUrl)}`;
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
+
+      if (result.type !== 'success' || !result.url) {
+        setLoading(false); // user dismissed the browser
+        return;
+      }
+
+      const { queryParams } = Linking.parse(result.url);
+      if (queryParams?.error) {
+        setLoading(false);
+        showError('Google sign-in failed. Please try again or use email.', 'auth');
+        return;
+      }
+      const token = queryParams?.token;
+      if (!token) { setLoading(false); showError('Google sign-in failed.', 'auth'); return; }
+
+      await AsyncStorage.setItem('token', String(token));
+      // The api interceptor now attaches the token; fetch the profile.
+      const me = await api.get('/auth/me');
+      const user = me.data.user;
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+      setLoading(false);
+      goToRoleHome(user.role);
+    } catch (e) {
+      setLoading(false);
+      showError('Google sign-in failed. Please try again.', 'auth');
+    }
+  };
+
   const getErrorIcon = () => {
     switch (errorType) {
       case 'network': return 'wifi-off';
@@ -241,8 +288,21 @@ export default function LoginScreen() {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.signUpContainer} 
+        {/* Divider */}
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>OR</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        {/* Google Sign-In */}
+        <TouchableOpacity onPress={handleGoogleLogin} style={styles.googleButton} disabled={loading} activeOpacity={0.8}>
+          <Icon name="google" size={18} color="#EA4335" style={{ marginRight: 10 }} />
+          <Text style={styles.googleButtonText}>Continue with Google</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.signUpContainer}
           onPress={() => navigation.navigate('SignUp')}
         >
           <Text style={styles.signUpText}>Don't have an account? <Text style={styles.signUpHighlight}>Sign Up</Text></Text>
@@ -301,6 +361,19 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: '#ffffff', fontWeight: '700', fontSize: 17 },
   
+  // Divider
+  dividerRow: { flexDirection: 'row', alignItems: 'center', width: '100%', marginTop: 18, marginBottom: 14 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#e2e8f0' },
+  dividerText: { marginHorizontal: 12, color: '#a0aec0', fontSize: 12, fontWeight: '600' },
+
+  // Google button
+  googleButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    borderColor: '#e2e8f0', borderWidth: 1.5, borderRadius: 14, height: 50,
+    width: '100%', backgroundColor: '#ffffff',
+  },
+  googleButtonText: { color: '#2d3748', fontWeight: '600', fontSize: 15 },
+
   signUpContainer: { marginTop: 18, padding: 8 },
   signUpText: { color: '#718096', fontSize: 14, textAlign: 'center' },
   signUpHighlight: { color: '#2563eb', fontWeight: '700' },

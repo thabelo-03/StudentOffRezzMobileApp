@@ -1,7 +1,9 @@
 {
   "expo": {
     "name": "ThabStay",
-    "slug": "StudentsOffResApp",
+    "slug": "thabstay",
+    "owner": "thabstay",
+    "scheme": "thabstay",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
@@ -27,11 +29,6 @@
     },
     "web": {
       "favicon": "./assets/logo.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "0a725f7d-6c71-499c-a37b-f1b1f4da8de1"
-      }
     },
     "plugins": [
       "expo-sqlite",

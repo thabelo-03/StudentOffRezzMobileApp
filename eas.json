@@ -6,19 +6,25 @@
   "build": {
     "development": {
       "developmentClient": true,
-      
-      "distribution": "internal"
-      
-      
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://thabstay-1c4cd9c3caf4.herokuapp.com"
+      }
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://thabstay-1c4cd9c3caf4.herokuapp.com"
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://thabstay-1c4cd9c3caf4.herokuapp.com"
+      }
     }
   },
   "submit": {
