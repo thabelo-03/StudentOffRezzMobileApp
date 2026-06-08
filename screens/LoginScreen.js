@@ -230,7 +230,7 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.card, { transform: [{ translateX: shakeAnim }] }]}>
-        <Image source={assets[0]} style={styles.logo} contentFit="contain" />
+        <Image source={assets[0]} style={styles.logo} contentFit="cover" />
         <Text style={styles.title}>Welcome Back</Text>
         <Text style={styles.subtitle}>Sign in to continue</Text>
 
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
     elevation: 6, alignItems: 'center', 
     shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 15, shadowOffset: { width: 0, height: 4 },
   },
-  logo: { width: 200, height: 90, borderRadius: 12, marginBottom: 16 },
+  logo: { width: 100, height: 100, borderRadius: 50, borderWidth: 4, borderColor: '#eff6ff', marginBottom: 16 },
   title: { fontSize: 26, fontWeight: '800', marginBottom: 4, textAlign: 'center', color: '#1a365d' },
   subtitle: { fontSize: 14, color: '#718096', marginBottom: 24 },
 

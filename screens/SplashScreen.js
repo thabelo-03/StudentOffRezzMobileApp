@@ -62,8 +62,8 @@ const SplashScreen = () => {
       <View style={styles.circle2} />
 
       <Animated.View style={[styles.contentContainer, { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateY }] }]}>
-        <View style={styles.logoContainer}>
-           <Image source={assets[0]} style={styles.logo} contentFit="contain" />
+        <View style={styles.logoShadow}>
+           <Image source={assets[0]} style={styles.logo} contentFit="cover" />
         </View>
         
         <Text style={styles.appName}>ThabStay</Text>
@@ -108,24 +108,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
   },
-  logoContainer: {
+  logoShadow: {
     width: 150,
     height: 150,
     borderRadius: 75,
     backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
     elevation: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
     marginBottom: 30,
-    padding: 15,
   },
   logo: {
-    width: '100%',
-    height: '100%',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    borderWidth: 4,
+    borderColor: '#eff6ff',
   },
   appName: {
     fontSize: 42,
