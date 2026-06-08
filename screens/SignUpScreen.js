@@ -6,16 +6,16 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import RNPickerSelect from 'react-native-picker-select';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 
 const SignUpScreen = ({ navigation }) => {
-  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confpassword, setConfPass] = useState('');
   const [role, setRole] = useState('');
-  const [studentRegNo, setStudentRegNo] = useState('');
   const [isAgreed, setIsAgreed] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
@@ -83,15 +83,15 @@ const SignUpScreen = ({ navigation }) => {
     Keyboard.dismiss();
     clearErrors();
 
-    const t = { username: username.trim(), email: email.trim(), phone: phone.trim(), password: password.trim(), confpassword: confpassword.trim() };
+    const t = { name: name.trim(), email: email.trim(), phoneNumber: phoneNumber.trim(), password: password.trim(), confpassword: confpassword.trim() };
     const fe = {};
 
-    // Validate all fields
-    if (!t.username) fe.username = 'Username is required';
+    // Validate all fields — aligned with web backend User model
+    if (!t.name) fe.name = 'Full name is required';
     if (!t.email) fe.email = 'Email is required';
     else if (!isValidEmail(t.email)) fe.email = 'Invalid email format (e.g. user@example.com)';
-    if (!t.phone) fe.phone = 'Phone number is required';
-    else if (t.phone.length < 10) fe.phone = 'Phone number must be at least 10 digits';
+    if (!t.phoneNumber) fe.phoneNumber = 'Phone number is required';
+    else if (t.phoneNumber.length < 10) fe.phoneNumber = 'Phone number must be at least 10 digits';
     if (!t.password) fe.password = 'Password is required';
     else {
       const pwErr = validatePassword(t.password);
@@ -100,7 +100,6 @@ const SignUpScreen = ({ navigation }) => {
     if (!t.confpassword) fe.confpassword = 'Please confirm your password';
     else if (t.password !== t.confpassword) fe.confpassword = 'Passwords do not match';
     if (!role) fe.role = 'Please select a role';
-    if (role === 'student' && !studentRegNo.trim()) fe.studentRegNo = 'Student Reg No is required';
     if (!isAgreed) fe.terms = 'You must agree to the Terms and Conditions';
 
     if (Object.keys(fe).length > 0) {
@@ -114,17 +113,36 @@ const SignUpScreen = ({ navigation }) => {
 
     try {
       setIsLoading(true);
+      // Payload matches the web backend POST /api/auth/register
       const response = await api.post('/auth/register', {
-        username: t.username, email: t.email, phone: t.phone, password: t.password,
-        role, studentRegNo: role === 'student' ? studentRegNo.trim() : undefined,
+        name: t.name,
+        email: t.email,
+        password: t.password,
+        role,
+        phoneNumber: t.phoneNumber,
       });
+
+      const { token, user } = response.data;
+
+      // Store token + user so the user is automatically logged in
+      if (token) await AsyncStorage.setItem('token', token);
+      if (user) await AsyncStorage.setItem('user', JSON.stringify(user));
+
       console.log('User registered successfully:', response.data);
-      setModalVisible(true);
+
+      // Navigate to the appropriate onboarding flow based on role
+      if (role === 'student') {
+        navigation.reset({ index: 0, routes: [{ name: 'StudentOnboarding' }] });
+      } else if (role === 'landlord') {
+        navigation.reset({ index: 0, routes: [{ name: 'Landlord' }] });
+      } else {
+        setModalVisible(true);
+      }
     } catch (error) {
       console.error("Error during sign up:", error);
       if (error.response) {
         const status = error.response.status;
-        const msg = error.response.data?.message || '';
+        const msg = error.response.data?.error || error.response.data?.message || '';
         if (status === 409 || msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('already registered')) {
           showError('An account with this email already exists. Please sign in instead.', 'auth', { email: 'Email already in use' });
         } else if (status >= 500) {
@@ -197,14 +215,14 @@ const SignUpScreen = ({ navigation }) => {
             </View>
           )}
 
-          {/* Username */}
-          {renderInput('username', 'user', 'Username', username, setUsername, { autoComplete: 'off', autoCorrect: false })}
+          {/* Full Name */}
+          {renderInput('name', 'user', 'Full Name', name, setName, { autoComplete: 'off', autoCorrect: false })}
 
           {/* Email */}
           {renderInput('email', 'envelope', 'Email', email, setEmail, { keyboardType: 'email-address', autoCapitalize: 'none', autoComplete: 'off' })}
 
           {/* Phone */}
-          {renderInput('phone', 'phone', 'Phone Number', phone, setPhone, { keyboardType: 'phone-pad', autoComplete: 'off' })}
+          {renderInput('phoneNumber', 'phone', 'Phone Number', phoneNumber, setPhoneNumber, { keyboardType: 'phone-pad', autoComplete: 'off' })}
 
           {/* Password */}
           <View style={[styles.inputContainer, hasFieldError('password') && styles.inputError]}>
@@ -272,12 +290,7 @@ const SignUpScreen = ({ navigation }) => {
           </View>
           {hasFieldError('role') && <Text style={styles.fieldError}>{fieldErrors.role}</Text>}
 
-          {/* Student Reg No */}
-          {role === 'student' && (
-            <>
-              {renderInput('studentRegNo', 'id-card', 'Student Reg No (e.g. N0123456X)', studentRegNo, setStudentRegNo, { autoCapitalize: 'characters' })}
-            </>
-          )}
+
 
           {/* Terms Checkbox */}
           <View style={[styles.checkboxContainer, hasFieldError('terms') && { borderColor: '#e53e3e', borderWidth: 1, borderRadius: 8, padding: 8, backgroundColor: '#fff5f5' }]}>
@@ -306,7 +319,7 @@ const SignUpScreen = ({ navigation }) => {
             <View style={styles.modalView}>
               <MCIcon name="check-circle" size={60} color="#38a169" style={{ marginBottom: 16 }} />
               <Text style={styles.modalTitle}>Welcome to ThabStay!</Text>
-              <Text style={styles.modalSub}>{username}, your account has been created successfully.</Text>
+              <Text style={styles.modalSub}>{name}, your account has been created successfully.</Text>
               <TouchableOpacity style={styles.modalButton} onPress={closeModal}>
                 <Text style={styles.modalButtonText}>Continue to Login</Text>
               </TouchableOpacity>

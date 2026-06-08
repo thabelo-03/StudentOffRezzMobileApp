@@ -32,11 +32,8 @@ const StudentHomeScreen = () => {
     gender: null
   });
 
-  // Profile Completion State
-  const [profileModalVisible, setProfileModalVisible] = useState(false);
-  const [program, setProgram] = useState('');
-  const [level, setLevel] = useState('');
-  const [savingProfile, setSavingProfile] = useState(false);
+  // Recommended listings (matches web's "Top Picks for You")
+  const [recommendedHouses, setRecommendedHouses] = useState([]);
   
   const [activeHouse, setActiveHouse] = useState(null);
   const [detailVisible, setDetailVisible] = useState(false);
@@ -48,6 +45,8 @@ const StudentHomeScreen = () => {
     useCallback(() => {
       fetchHouses();
       fetchBookings();
+      fetchFavorites();
+      fetchRecommended();
     }, [])
   );
 
@@ -63,14 +62,6 @@ const StudentHomeScreen = () => {
       if (!stored) return;
       const data = JSON.parse(stored);
       if (data.name) setUserName(data.name);
-
-      // NOTE: the old Firebase build stored program/level on the RTDB user object,
-      // so this modal auto-popped when they were missing. The web backend keeps that
-      // data on the StudentProfile model (PUT /profiles/student/me) — a richer profile
-      // requiring university/campus/lifestyle/logistics, which this lightweight modal
-      // can't satisfy. Auto-popup is disabled until the full student profile flow is
-      // ported. TODO: drive this from GET /api/profiles completeness instead.
-      // if (!data.program || !data.level) setProfileModalVisible(true);
     };
     getUser();
   }, []);
@@ -101,25 +92,27 @@ const StudentHomeScreen = () => {
     }
   };
 
-  const handleSaveProfile = async () => {
-    if (!program || !level) {
-      Alert.alert("Required", "Please fill in all fields.");
-      return;
-    }
-    
+  const fetchFavorites = async () => {
     try {
-      setSavingProfile(true);
-      // TODO (remapping phase): confirm the exact backend route/shape for
-      // updating a student profile (program/level live on StudentProfile).
-      await api.put('/profiles', { program, level });
+      const res = await api.get('/favorites');
+      const favMap = {};
+      (res.data || []).forEach(f => {
+        const id = f.listing?._id || f.listing;
+        if (id) favMap[id] = true;
+      });
+      setLikedHouses(favMap);
+    } catch (err) {
+      console.log('Favorites fetch error:', err);
+    }
+  };
 
-      setProfileModalVisible(false);
-      Alert.alert("Success", "Profile updated successfully!");
-    } catch (error) {
-      console.error("Profile Update Error:", error);
-      Alert.alert("Error", "Failed to update profile.");
-    } finally {
-      setSavingProfile(false);
+  const fetchRecommended = async () => {
+    try {
+      const res = await api.get('/listings/recommended');
+      const raw = res.data || [];
+      setRecommendedHouses(raw.map(normalizeListing));
+    } catch (err) {
+      console.log('Recommended fetch error:', err);
     }
   };
 
@@ -154,8 +147,21 @@ const StudentHomeScreen = () => {
     }
   };
 
-  const toggleLike = (id) => {
+  const toggleLike = async (id) => {
+    const isLiked = likedHouses[id];
+    // Optimistic update
     setLikedHouses(prev => ({ ...prev, [id]: !prev[id] }));
+    try {
+      if (isLiked) {
+        await api.delete(`/favorites/${id}`);
+      } else {
+        await api.post(`/favorites/${id}`);
+      }
+    } catch (err) {
+      // Revert on failure
+      setLikedHouses(prev => ({ ...prev, [id]: isLiked }));
+      console.log('Favorite toggle error:', err);
+    }
   };
 
   // Get unique locations from houses
@@ -572,38 +578,58 @@ const StudentHomeScreen = () => {
         </TouchableOpacity>
       </Modal>
 
-      {/* Profile Completion Modal */}
-      <Modal visible={profileModalVisible} animationType="slide" transparent={true}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.profileModalContainer}>
-            <Text style={styles.modalTitle}>Complete Your Profile</Text>
-            <Text style={styles.modalSub}>Please provide your student details to continue.</Text>
-            
-            <Text style={styles.label}>Program / Course</Text>
-            <TextInput 
-              style={styles.input} 
-              placeholder="e.g. Computer Science" 
-              value={program} 
-              onChangeText={setProgram} 
-            />
 
-            <Text style={styles.label}>Level / Year</Text>
-            <TextInput 
-              style={styles.input} 
-              placeholder="e.g. 4.2" 
-              value={level} 
-              onChangeText={setLevel} 
-            />
-
-            <TouchableOpacity style={styles.saveProfileBtn} onPress={handleSaveProfile} disabled={savingProfile}>
-              {savingProfile ? <ActivityIndicator color="#fff" /> : <Text style={styles.whiteText}>Save & Continue</Text>}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
       {loading ? <ActivityIndicator size="large" color="#2563eb" style={{marginTop: 50}} /> : (
-        <FlatList data={filteredHouses} renderItem={renderHouseItem} keyExtractor={item => item.id} contentContainerStyle={{ paddingBottom: 30 }} />
+        <FlatList
+          data={filteredHouses}
+          renderItem={renderHouseItem}
+          keyExtractor={item => item.id}
+          contentContainerStyle={{ paddingBottom: 30 }}
+          ListHeaderComponent={
+            recommendedHouses.length > 0 ? (
+              <View style={styles.recommendedSection}>
+                <View style={styles.recommendedHeader}>
+                  <Icon name="star-four-points" size={20} color="#7c3aed" />
+                  <Text style={styles.recommendedTitle}>Top Picks for You</Text>
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 15, gap: 12 }}>
+                  {recommendedHouses.slice(0, 5).map((item) => {
+                    const images = item.imageUrls || item.images || [];
+                    const mainImage = images.length > 0
+                      ? (images[0].startsWith('http') || images[0].startsWith('data:') ? images[0] : `${BASE_URL}/uploads/${images[0].replace(/\\\\/g, '/')}`)
+                      : null;
+                    return (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={styles.recommendedCard}
+                        activeOpacity={0.9}
+                        onPress={() => { setActiveHouse(item); setActiveImageIndex(0); setDetailVisible(true); }}
+                      >
+                        {mainImage ? (
+                          <Image source={{ uri: mainImage }} style={styles.recommendedImage} />
+                        ) : (
+                          <View style={[styles.recommendedImage, { backgroundColor: '#e2e8f0', justifyContent: 'center', alignItems: 'center' }]}>
+                            <Icon name="image-off-outline" size={30} color="#bbb" />
+                          </View>
+                        )}
+                        <View style={styles.recommendedBadge}>
+                          <Icon name="star-four-points" size={10} color="#fff" />
+                          <Text style={styles.recommendedBadgeText}>BEST MATCH</Text>
+                        </View>
+                        <View style={styles.recommendedContent}>
+                          <Text style={styles.recommendedName} numberOfLines={1}>{item.title || item.houseName}</Text>
+                          <Text style={styles.recommendedPrice}>${item.price}<Text style={styles.recommendedPeriod}>/mo</Text></Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+                <View style={styles.sectionDivider} />
+              </View>
+            ) : null
+          }
+        />
       )}
 
       {/* DETAIL MODAL */}

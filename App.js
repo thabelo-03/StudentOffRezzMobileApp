@@ -32,6 +32,7 @@ import NotificationsScreen from './screens/NotificationsScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import HelpScreen from './screens/HelpScreen';
 import BillingScreen from './screens/BillingScreen';
+import StudentOnboardingScreen from './screens/StudentOnboardingScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -141,6 +142,9 @@ export default function App() {
         
         {/* Student Verification Flow */}
         <Stack.Screen name="StudentVerification" component={StudentVerificationScreen} options={{ headerShown: false }} />
+
+        {/* Student Onboarding (after signup) */}
+        <Stack.Screen name="StudentOnboarding" component={StudentOnboardingScreen} options={{ headerShown: false }} />
 
         {/* ChatDetail MUST be here. 
             When you click a chat in LandlordInbox, 
