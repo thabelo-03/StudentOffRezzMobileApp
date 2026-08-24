@@ -8,7 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://thabstay-1c4cd9c3caf4.herokuapp.com"
+        "EXPO_PUBLIC_API_BASE_URL": "https://thabstay.co.zw"
       }
     },
     "preview": {
@@ -17,13 +17,13 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://thabstay-1c4cd9c3caf4.herokuapp.com"
+        "EXPO_PUBLIC_API_BASE_URL": "https://thabstay.co.zw"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://thabstay-1c4cd9c3caf4.herokuapp.com"
+        "EXPO_PUBLIC_API_BASE_URL": "https://thabstay.co.zw"
       }
     }
   },

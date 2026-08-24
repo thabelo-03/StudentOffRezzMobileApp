@@ -8,6 +8,7 @@ import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import RNPickerSelect from 'react-native-picker-select';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 
 const SignUpScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -162,6 +163,22 @@ const SignUpScreen = ({ navigation }) => {
 
   const closeModal = () => { setModalVisible(false); navigation.navigate('Login'); };
 
+  // Google sign-up outcomes. The button handles the role picker + backend
+  // exchange itself; here we just land the (now signed-in) user on their home.
+  const handleGoogleSuccess = (profile) => {
+    clearErrors();
+    const r = profile?.role;
+    if (r === 'admin') navigation.reset({ index: 0, routes: [{ name: 'AdminDashboard' }] });
+    else if (r === 'landlord') navigation.reset({ index: 0, routes: [{ name: 'Landlord' }] });
+    else if (r === 'student') navigation.reset({ index: 0, routes: [{ name: 'Student' }] });
+    else showError('Your account role is not recognized. Please contact support.', 'general');
+  };
+
+  const handleGoogleError = (msg) => {
+    setIsLoading(false);
+    if (msg) showError(msg, 'auth'); // null == user dismissed the browser
+  };
+
   const getErrorIcon = () => {
     switch (errorType) {
       case 'network': return 'wifi-off';
@@ -308,6 +325,22 @@ const SignUpScreen = ({ navigation }) => {
             {isLoading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.buttonText}>Create Account</Text>}
           </TouchableOpacity>
 
+          {/* Divider */}
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Google Sign-Up (own role picker + backend exchange) */}
+          <GoogleAuthButton
+            label="Sign up with Google"
+            disabled={isLoading}
+            onStart={() => { clearErrors(); setIsLoading(true); }}
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+          />
+
           <TouchableOpacity style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
             <Text style={styles.loginText}>Already have an account? <Text style={styles.loginHighlight}>Sign In</Text></Text>
           </TouchableOpacity>
@@ -377,6 +410,11 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#ffffff', fontWeight: '700', fontSize: 17 },
+
+  // Divider
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 18, marginBottom: 14 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#e2e8f0' },
+  dividerText: { marginHorizontal: 12, color: '#a0aec0', fontSize: 12, fontWeight: '600' },
 
   loginLink: { marginTop: 18, alignItems: 'center', padding: 8 },
   loginText: { color: '#718096', fontSize: 14 },

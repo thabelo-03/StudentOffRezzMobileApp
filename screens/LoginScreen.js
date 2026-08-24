@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, Text, ActivityIndicator, Animated, Keyboard } from 'react-native';
+import { StyleSheet, View, TextInput, TouchableOpacity, Text, ActivityIndicator, Animated, Keyboard, Modal } from 'react-native';
 import { Image } from 'expo-image';
 import { useAssets } from 'expo-asset';
 import { useNavigation } from '@react-navigation/native';
@@ -19,6 +19,9 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  // Role is chosen up-front so a landlord signing up with Google isn't silently
+  // created as a student (the backend defaults to 'student' when no role is sent).
+  const [roleModalVisible, setRoleModalVisible] = useState(false);
 
   // Error state
   const [errorMsg, setErrorMsg] = useState('');
@@ -173,13 +176,34 @@ export default function LoginScreen() {
     else showError('Your account role is not recognized. Please contact support.', 'general');
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = () => {
+    clearErrors();
+    setRoleModalVisible(true);
+  };
+
+  // Signs the user in and lands them on their home screen.
+  const finishSignIn = async (token, user) => {
+    await AsyncStorage.setItem('token', String(token));
+    let profile = user;
+    if (!profile) {
+      // The api interceptor now attaches the token; fetch the profile.
+      const me = await api.get('/auth/me');
+      profile = me.data.user;
+    }
+    await AsyncStorage.setItem('user', JSON.stringify(profile));
+    setLoading(false);
+    goToRoleHome(profile.role);
+  };
+
+  const startGoogleFlow = async (role) => {
+    setRoleModalVisible(false);
     try {
       clearErrors();
       setLoading(true);
       // Deep link the backend will return the JWT to (e.g. thabstay://google-auth).
       const redirectUrl = Linking.createURL('google-auth');
-      const authUrl = `${BASE_URL}/auth/google?platform=mobile&redirect=${encodeURIComponent(redirectUrl)}`;
+      const authUrl = `${BASE_URL}/auth/google?platform=mobile&role=${role}` +
+        `&redirect=${encodeURIComponent(redirectUrl)}`;
       const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUrl);
 
       if (result.type !== 'success' || !result.url) {
@@ -193,19 +217,34 @@ export default function LoginScreen() {
         showError('Google sign-in failed. Please try again or use email.', 'auth');
         return;
       }
-      const token = queryParams?.token;
-      if (!token) { setLoading(false); showError('Google sign-in failed.', 'auth'); return; }
 
-      await AsyncStorage.setItem('token', String(token));
-      // The api interceptor now attaches the token; fetch the profile.
-      const me = await api.get('/auth/me');
-      const user = me.data.user;
-      await AsyncStorage.setItem('user', JSON.stringify(user));
+      // Existing account — the backend already issued a JWT.
+      if (queryParams?.token) {
+        await finishSignIn(queryParams.token, null);
+        return;
+      }
+
+      // New account — Google verified them, but they still need a ThabStay
+      // account. Exchange the prefill token for a session; no password needed.
+      if (queryParams?.google_prefill && queryParams?.prefill) {
+        // Absolute URL: the Google routes are mounted at /auth on the server
+        // root, not under the /api prefix that `api` is configured with.
+        const { data } = await api.post(`${BASE_URL}/auth/google/complete`, {
+          prefill: queryParams.prefill,
+          role: queryParams.role || role,
+        });
+        await finishSignIn(data.token, data.user);
+        return;
+      }
+
       setLoading(false);
-      goToRoleHome(user.role);
+      showError('Google sign-in failed.', 'auth');
     } catch (e) {
       setLoading(false);
-      showError('Google sign-in failed. Please try again.', 'auth');
+      showError(
+        e?.response?.data?.error || 'Google sign-in failed. Please try again.',
+        'auth'
+      );
     }
   };
 
@@ -308,6 +347,60 @@ export default function LoginScreen() {
           <Text style={styles.signUpText}>Don't have an account? <Text style={styles.signUpHighlight}>Sign Up</Text></Text>
         </TouchableOpacity>
       </Animated.View>
+
+      {/* Ask which kind of account before handing off to Google. Existing users
+          are logged into their real account regardless of what they pick. */}
+      <Modal
+        visible={roleModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRoleModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPress={() => setRoleModalVisible(false)}
+        >
+          <TouchableOpacity style={styles.modalCard} activeOpacity={1}>
+            <Text style={styles.modalTitle}>Continue as</Text>
+            <Text style={styles.modalSubtitle}>
+              Choose the kind of account you want. If you already have one, we'll
+              just sign you in.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.roleOption}
+              onPress={() => startGoogleFlow('student')}
+              activeOpacity={0.8}
+            >
+              <MCIcon name="school-outline" size={24} color="#2563eb" />
+              <View style={styles.roleTextWrap}>
+                <Text style={styles.roleTitle}>Student</Text>
+                <Text style={styles.roleDesc}>Find and book off-campus accommodation</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.roleOption}
+              onPress={() => startGoogleFlow('landlord')}
+              activeOpacity={0.8}
+            >
+              <MCIcon name="home-city-outline" size={24} color="#2563eb" />
+              <View style={styles.roleTextWrap}>
+                <Text style={styles.roleTitle}>Landlord</Text>
+                <Text style={styles.roleDesc}>List your property and manage bookings</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modalCancel}
+              onPress={() => setRoleModalVisible(false)}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -373,6 +466,29 @@ const styles = StyleSheet.create({
     width: '100%', backgroundColor: '#ffffff',
   },
   googleButtonText: { color: '#2d3748', fontWeight: '600', fontSize: 15 },
+
+  // Google role picker
+  modalBackdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center', alignItems: 'center', padding: 24,
+  },
+  modalCard: {
+    backgroundColor: '#ffffff', borderRadius: 20, padding: 24, width: '100%',
+    elevation: 8, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 20,
+    shadowOffset: { width: 0, height: 6 },
+  },
+  modalTitle: { fontSize: 19, fontWeight: '700', color: '#2d3748', marginBottom: 6 },
+  modalSubtitle: { fontSize: 13, color: '#718096', lineHeight: 19, marginBottom: 18 },
+  roleOption: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    borderColor: '#e2e8f0', borderWidth: 1.5, borderRadius: 14,
+    padding: 16, marginBottom: 12, backgroundColor: '#f7fafc',
+  },
+  roleTextWrap: { flex: 1 },
+  roleTitle: { fontSize: 15, fontWeight: '700', color: '#2d3748' },
+  roleDesc: { fontSize: 12, color: '#718096', marginTop: 2 },
+  modalCancel: { padding: 10, alignItems: 'center', marginTop: 2 },
+  modalCancelText: { color: '#718096', fontSize: 14, fontWeight: '600' },
 
   signUpContainer: { marginTop: 18, padding: 8 },
   signUpText: { color: '#718096', fontSize: 14, textAlign: 'center' },
