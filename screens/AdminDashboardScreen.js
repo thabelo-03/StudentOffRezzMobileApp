@@ -6,6 +6,12 @@ import api from '../services/api';
 
 const { width } = Dimensions.get('window');
 
+// Explicit 2-column card width. Percentage widths ('48%') collapse when the
+// grid sits inside a ScrollView whose content width isn't firmly resolved,
+// leaving the cards bunched at the start with a too-narrow width. Compute the
+// pixel width instead: screen − container h-padding (15*2) − a 14px column gap.
+const CARD_WIDTH = (width - 30 - 14) / 2;
+
 const AdminDashboardScreen = ({ navigation }) => {
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -185,7 +191,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 15,
     alignItems: 'center',
-    width: '48%', // Ensures 2 per row with space-between
+    width: CARD_WIDTH, // computed 2-per-row (percentages collapse inside the ScrollView)
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
